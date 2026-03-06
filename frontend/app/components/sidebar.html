@@ -1,0 +1,106 @@
+{% set current_path = request.url.path %}
+{% set user_role = request.state.current_user.role if request.state.current_user else 'student' %}
+
+{# ── Sidebar navigation items per role ── #}
+{% set student_nav = [
+    {'href': '/dashboard', 'icon': 'fa-folder', 'label': 'Dashboard', 'match': '/dashboard'},
+    {'href': '/dashboard/projects', 'icon': 'fa-folder-open', 'label': 'My Projects', 'match': '/dashboard/projects'},
+    {'href': '/dashboard/submissions', 'icon': 'fa-file-arrow-up', 'label': 'My Submissions', 'match': '/dashboard/submissions'},
+    {'href': '/dashboard/messages', 'icon': 'fa-comments', 'label': 'Messages', 'match': '/dashboard/messages'},
+    {'href': '/dashboard/settings', 'icon': 'fa-gear', 'label': 'Settings', 'match': '/dashboard/settings'},
+] %}
+
+{% set supervisor_nav = [
+    {'href': '/dashboard', 'icon': 'fa-folder', 'label': 'Dashboard', 'match': '/dashboard'},
+    {'href': '/dashboard/projects', 'icon': 'fa-folder-open', 'label': 'Projects', 'match': '/dashboard/projects'},
+    {'href': '/dashboard/students', 'icon': 'fa-user-graduate', 'label': 'Students', 'match': '/dashboard/students'},
+    {'href': '/dashboard/submissions', 'icon': 'fa-file-arrow-up', 'label': 'Reviews', 'match': '/dashboard/submissions'},
+    {'href': '/dashboard/messages', 'icon': 'fa-comments', 'label': 'Messages', 'match': '/dashboard/messages'},
+    {'href': '/dashboard/settings', 'icon': 'fa-gear', 'label': 'Settings', 'match': '/dashboard/settings'},
+] %}
+
+{% set admin_nav = [
+    {'href': '/dashboard', 'icon': 'fa-folder', 'label': 'Dashboard', 'match': '/dashboard'},
+    {'href': '/dashboard/projects', 'icon': 'fa-folder-open', 'label': 'Projects', 'match': '/dashboard/projects'},
+    {'href': '/dashboard/users', 'icon': 'fa-users', 'label': 'Users', 'match': '/dashboard/users'},
+    {'href': '/dashboard/departments', 'icon': 'fa-building-columns', 'label': 'Departments', 'match': '/dashboard/departments'},
+    {'href': '/dashboard/submissions', 'icon': 'fa-file-arrow-up', 'label': 'Submissions', 'match': '/dashboard/submissions'},
+    {'href': '/dashboard/settings', 'icon': 'fa-gear', 'label': 'Settings', 'match': '/dashboard/settings'},
+] %}
+
+{% if user_role == 'admin' %}
+    {% set nav_items = admin_nav %}
+{% elif user_role == 'supervisor' %}
+    {% set nav_items = supervisor_nav %}
+{% else %}
+    {% set nav_items = student_nav %}
+{% endif %}
+
+<!-- Mobile overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-secondary-900/40 backdrop-blur-sm z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed top-0 left-0 z-50 h-screen w-64 bg-white border-r border-secondary-200 flex flex-col shadow-sm transition-all duration-300 -translate-x-full lg:translate-x-0 lg:static lg:z-auto">
+    
+    <!-- Header -->
+    <div class="h-16 px-5 flex justify-between items-center border-b border-secondary-200 flex-shrink-0">
+        {% include "components/logo.html" %}
+        <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center text-secondary-400 hover:text-secondary-700 hover:bg-secondary-100 cursor-pointer lg:hidden">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="flex flex-col justify-between flex-1 overflow-y-auto p-4">
+        <div class="flex flex-col gap-1">
+            {% for item in nav_items %}
+            {% set is_active = (current_path == item.match) or (item.match != '/dashboard' and current_path.startswith(item.match)) %}
+            <a href="{{ item.href }}" 
+               class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                      {% if is_active %}
+                          bg-primary-50 text-primary border-l-3 border-primary
+                      {% else %}
+                          text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900
+                      {% endif %}">
+                <i class="fa-solid {{ item.icon }} w-5 text-center {% if is_active %}text-primary{% else %}text-secondary-400{% endif %}"></i>
+                <span class="sidebar-label">{{ item.label }}</span>
+                {% if is_active %}
+                <div class="ml-auto w-1.5 h-1.5 rounded-full bg-primary"></div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- User card & logout -->
+        <div class="border-t border-secondary-200 pt-4 mt-4">
+            {% if request.state.current_user %}
+            <div class="flex items-center gap-3 px-4 py-2.5 mb-2 rounded-lg bg-secondary-50">
+                <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                    {{ request.state.current_user.first_name[0] }}{{ request.state.current_user.last_name[0] }}
+                </div>
+                <div class="flex flex-col min-w-0 sidebar-label">
+                    <span class="text-sm font-semibold text-secondary-900 truncate">{{ request.state.current_user.first_name }} {{ request.state.current_user.last_name }}</span>
+                    <span class="text-xs text-secondary-400 capitalize">{{ request.state.current_user.role }}</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <form action="{{ url_for('logout') }}" method="post">
+                <button type="submit" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-accent-error hover:bg-red-50 w-full cursor-pointer transition-colors">
+                    <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+                    <span class="sidebar-label">Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</aside>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+    document.body.classList.toggle('overflow-hidden');
+}
+</script>

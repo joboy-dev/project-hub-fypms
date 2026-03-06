@@ -1,0 +1,1 @@
+# FastAPI Base Template with Jinja Support

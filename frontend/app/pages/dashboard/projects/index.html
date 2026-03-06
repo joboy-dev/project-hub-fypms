@@ -1,0 +1,71 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-xl font-bold text-secondary-900">Projects</h2>
+        <p class="text-sm text-secondary-400 mt-0.5">{{ pagination_data.total }} project{{ 's' if pagination_data.total != 1 else '' }} total</p>
+    </div>
+    {% if request.state.current_user.role == 'student' %}
+    <a href="/dashboard/projects/new" class="btn btn-primary text-sm">
+        <i class="fa-solid fa-plus mr-2"></i> New Project
+    </a>
+    {% endif %}
+</div>
+
+{% if projects %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    {% for project in projects %}
+    <a href="/dashboard/projects/{{ project.id }}" class="card group hover:border-primary-200 no-underline block">
+        <div class="flex items-start justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center flex-shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                <i class="fa-solid fa-folder text-sm"></i>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                {% if project.status == 'completed' %}bg-emerald-50 text-accent-success
+                {% elif project.status == 'in_progress' %}bg-primary-50 text-primary
+                {% elif project.status == 'approved' %}bg-blue-50 text-accent-info
+                {% elif project.status == 'rejected' %}bg-red-50 text-accent-error
+                {% elif project.status == 'under_review' %}bg-orange-50 text-accent-warning
+                {% elif project.status == 'proposed' %}bg-purple-50 text-purple-600
+                {% else %}bg-secondary-100 text-secondary{% endif %}">
+                {{ project.status | replace('_', ' ') | title }}
+            </span>
+        </div>
+        <h3 class="text-sm font-semibold text-secondary-900 mb-1 truncate group-hover:text-primary">{{ project.title }}</h3>
+        <p class="text-xs text-secondary-400 line-clamp-2 mb-4">{{ project.description or 'No description' }}</p>
+        <div class="flex items-center justify-between text-xs text-secondary-400 pt-3 border-t border-secondary-100">
+            <span><i class="fa-solid fa-calendar mr-1"></i> {{ project.created_at[:10] if project.created_at else 'N/A' }}</span>
+            {% if project.grade %}
+            <span class="font-semibold text-gold">Grade: {{ project.grade }}</span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% include "components/paginator.html" %}
+
+{% else %}
+<div class="card text-center py-16">
+    <div class="w-16 h-16 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-folder-open text-2xl text-secondary-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-secondary-900 mb-1">No projects yet</h3>
+    <p class="text-sm text-secondary-400 mb-4">
+        {% if request.state.current_user.role == 'student' %}
+        Get started by creating your first project
+        {% else %}
+        No projects to display at the moment
+        {% endif %}
+    </p>
+    {% if request.state.current_user.role == 'student' %}
+    <a href="/dashboard/projects/new" class="btn btn-primary text-sm inline-flex items-center">
+        <i class="fa-solid fa-plus mr-2"></i> Create Project
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

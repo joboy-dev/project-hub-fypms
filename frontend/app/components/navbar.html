@@ -1,0 +1,125 @@
+<nav class="navbar nav-padding bg-white/95 backdrop-blur-md border-b border-secondary-200 flex items-center justify-between relative fixed top-0 left-0 right-0 z-40 shadow-sm">
+    <div class="flex items-center w-full">
+        {% include "components/logo.html" %}
+
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex items-center gap-6 ml-8 flex-1 justify-end">
+            {% if request.state.current_user %}
+            <a href="{{ url_for('dashboard') }}"
+               class="btn btn-primary text-sm">
+                <i class="fa-solid fa-grid-2 mr-1.5"></i> Dashboard
+            </a>
+            {% else %}
+            <a href="/"
+               class="text-secondary-600 hover:text-primary font-medium text-sm">
+                Home
+            </a>
+            <a href="/#features"
+               class="text-secondary-600 hover:text-primary font-medium text-sm">
+                Features
+            </a>
+            <a href="/#how-it-works"
+               class="text-secondary-600 hover:text-primary font-medium text-sm">
+                How It Works
+            </a>
+
+            <!-- Role-based auth links -->
+            <div class="flex items-center gap-3 ml-2">
+                <a href="{{ url_for('student_auth') }}"
+                   class="btn text-sm bg-primary-50 text-primary border border-primary-200 hover:bg-primary hover:text-white">
+                    <i class="fa-solid fa-graduation-cap mr-1.5"></i> Student
+                </a>
+                <a href="{{ url_for('supervisor_auth') }}"
+                   class="btn text-sm bg-gold-50 text-gold-700 border border-gold-200 hover:bg-gold hover:text-white">
+                    <i class="fa-solid fa-chalkboard-teacher mr-1.5"></i> Supervisor
+                </a>
+                <a href="{{ url_for('admin_auth') }}"
+                   class="btn text-sm bg-secondary-100 text-secondary-700 border border-secondary-300 hover:bg-secondary-800 hover:text-white">
+                    <i class="fa-solid fa-shield-halved mr-1.5"></i> Admin
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Mobile Hamburger -->
+        <div class="md:hidden flex items-center ml-auto">
+            <button class="hamburger block focus:outline-none cursor-pointer">
+                <i class="fa fa-bars text-2xl text-secondary-700"></i>
+            </button>
+            <button class="cancel hidden ml-4 focus:outline-none cursor-pointer">
+                <i class="fa fa-times text-2xl text-secondary-700"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div class="mobile-nav w-full bg-white border-t border-secondary-200 z-50 flex flex-col items-start justify-start gap-2 hidden md:hidden absolute left-0 top-full shadow-lg">
+        <div class="p-6 flex flex-col gap-3 w-full">
+            {% if request.state.current_user %}
+            <a href="{{ url_for('dashboard') }}"
+               class="btn btn-primary text-sm w-full text-center">
+                <i class="fa-solid fa-grid-2 mr-1.5"></i> Dashboard
+            </a>
+            {% else %}
+            <a href="/"
+               class="text-secondary-700 hover:text-primary font-medium py-2">
+                Home
+            </a>
+            <a href="/#features"
+               class="text-secondary-700 hover:text-primary font-medium py-2">
+                Features
+            </a>
+            <a href="/#how-it-works"
+               class="text-secondary-700 hover:text-primary font-medium py-2">
+                How It Works
+            </a>
+            <hr class="border-secondary-200">
+            <a href="{{ url_for('student_auth') }}"
+               class="btn text-sm bg-primary-50 text-primary border border-primary-200 text-center w-full">
+                <i class="fa-solid fa-graduation-cap mr-1.5"></i> Student Portal
+            </a>
+            <a href="{{ url_for('supervisor_auth') }}"
+               class="btn text-sm bg-gold-50 text-gold-700 border border-gold-200 text-center w-full">
+                <i class="fa-solid fa-chalkboard-teacher mr-1.5"></i> Supervisor Portal
+            </a>
+            <a href="{{ url_for('admin_auth') }}"
+               class="btn text-sm bg-secondary-100 text-secondary-700 border border-secondary-300 text-center w-full">
+                <i class="fa-solid fa-shield-halved mr-1.5"></i> Admin Portal
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const hamburger = document.querySelector('.hamburger');
+    const cancel = document.querySelector('.cancel');
+    const mobileNav = document.querySelector('.mobile-nav');
+
+    function showMenu() {
+        mobileNav.classList.remove('hidden');
+        hamburger.classList.add('hidden');
+        cancel.classList.remove('hidden');
+    }
+
+    function hideMenu() {
+        mobileNav.classList.add('hidden');
+        hamburger.classList.remove('hidden');
+        cancel.classList.add('hidden');
+    }
+
+    hamburger.addEventListener('click', showMenu);
+    cancel.addEventListener('click', hideMenu);
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            hideMenu();
+        }
+    });
+
+    // Close mobile nav when clicking a link
+    mobileNav.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', hideMenu);
+    });
+});
+</script>

@@ -1,0 +1,114 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h2 class="text-xl font-bold text-secondary-900">Users</h2>
+        <p class="text-sm text-secondary-400 mt-0.5">{{ pagination_data.total }} user{{ 's' if pagination_data.total != 1 else '' }} total</p>
+    </div>
+</div>
+
+{# ── Filters ── #}
+<div class="card mb-6 p-4">
+    <form method="get" action="/dashboard/users" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div class="relative flex-1">
+            <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400 text-sm"></i>
+            <input type="text" name="q" value="{{ search_query }}" 
+                   class="w-full bg-white border border-secondary-300 rounded-lg pl-10 pr-4 py-2 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400"
+                   placeholder="Search by name or email...">
+        </div>
+        <select name="role" class="bg-white border border-secondary-300 rounded-lg px-4 py-2 text-sm text-secondary-700 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <option value="all" {{ 'selected' if role_filter == 'all' else '' }}>All Roles</option>
+            <option value="student" {{ 'selected' if role_filter == 'student' else '' }}>Students</option>
+            <option value="supervisor" {{ 'selected' if role_filter == 'supervisor' else '' }}>Supervisors</option>
+            <option value="admin" {{ 'selected' if role_filter == 'admin' else '' }}>Admins</option>
+        </select>
+        <button type="submit" class="btn btn-primary text-sm py-2">
+            <i class="fa-solid fa-filter mr-1"></i> Filter
+        </button>
+    </form>
+</div>
+
+{% if users %}
+<div class="card overflow-hidden p-0">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-secondary-50 border-b border-secondary-200">
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide">User</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide hidden sm:table-cell">Email</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide">Role</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide hidden md:table-cell">Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide hidden lg:table-cell">Joined</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-secondary-100">
+                {% for u in users %}
+                <tr class="hover:bg-secondary-50/50 transition-colors cursor-pointer" onclick="window.location='/dashboard/users/{{ u.id }}'">
+                    <td class="px-5 py-3.5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
+                                {% if u.role == 'admin' %}bg-secondary-800 text-white
+                                {% elif u.role == 'supervisor' %}bg-gold text-white
+                                {% else %}bg-primary text-white{% endif %}">
+                                {{ u.first_name[0] }}{{ u.last_name[0] }}
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-medium text-secondary-900 truncate hover:text-primary">{{ u.first_name }} {{ u.last_name }}</p>
+                                <p class="text-xs text-secondary-400 sm:hidden truncate">{{ u.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3.5 text-secondary-600 hidden sm:table-cell">{{ u.email }}</td>
+                    <td class="px-5 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                            {% if u.role == 'admin' %}bg-secondary-800 text-white
+                            {% elif u.role == 'supervisor' %}bg-gold-50 text-gold-700
+                            {% else %}bg-primary-50 text-primary{% endif %}">
+                            {{ u.role }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3.5 hidden md:table-cell">
+                        <span class="inline-flex items-center gap-1 text-xs font-medium
+                            {% if u.is_active %}text-accent-success{% else %}text-secondary-400{% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full {% if u.is_active %}bg-accent-success{% else %}bg-secondary-300{% endif %}"></span>
+                            {{ 'Active' if u.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td class="px-5 py-3.5 text-secondary-400 hidden lg:table-cell">
+                        {{ u.created_at[:10] if u.created_at else 'N/A' }}
+                    </td>
+                    <td class="px-5 py-3.5" onclick="event.stopPropagation()">
+                        <div class="flex items-center gap-2">
+                            <a href="/dashboard/users/{{ u.id }}/edit" class="text-secondary-400 hover:text-primary" title="Edit">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </a>
+                            <form method="post" action="/dashboard/users/{{ u.id }}/toggle-active" class="inline">
+                                <button type="submit" class="text-secondary-400 hover:text-accent-warning cursor-pointer" title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                                    <i class="fa-solid fa-{{ 'ban' if u.is_active else 'check-circle' }} text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "components/paginator.html" %}
+
+{% else %}
+<div class="card text-center py-16">
+    <div class="w-16 h-16 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-users text-2xl text-secondary-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-secondary-900 mb-1">No users found</h3>
+    <p class="text-sm text-secondary-400">Try adjusting your search or filter criteria</p>
+</div>
+{% endif %}
+
+{% endblock %}

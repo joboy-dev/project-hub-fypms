@@ -1,0 +1,86 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="/dashboard/projects/{{ project.id }}" class="text-sm text-secondary-400 hover:text-secondary-700">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Project
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 class="text-xl font-bold text-secondary-900 mb-6">Edit Project</h2>
+
+        <form method="post" action="/dashboard/projects/{{ project.id }}/edit" class="space-y-5">
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="title">Project Title</label>
+                <input type="text" id="title" name="title" required value="{{ project.title }}"
+                       class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400"
+                       placeholder="e.g. Smart Attendance System">
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="description">Description</label>
+                <textarea id="description" name="description" rows="4"
+                          class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400 resize-y"
+                          placeholder="Describe your project...">{{ project.description or '' }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="department_id">Department</label>
+                    <select id="department_id" name="department_id"
+                            class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Select department</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {{ 'selected' if dept.id == project.department_id else '' }}>{{ dept.name }} ({{ dept.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="supervisor_id">Supervisor</label>
+                    <select id="supervisor_id" name="supervisor_id"
+                            class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Select supervisor</option>
+                        {% for s in supervisors %}
+                        <option value="{{ s.id }}" {{ 'selected' if s.id == project.supervisor_id else '' }}>{{ s.first_name }} {{ s.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="status">Status</label>
+                <select id="status" name="status"
+                        class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    {% for s in status_choices %}
+                    <option value="{{ s }}" {{ 'selected' if s == project.status else '' }}>{{ s | replace('_', ' ') | title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-secondary-100">
+                <a href="/dashboard/projects/{{ project.id }}" class="btn text-sm text-secondary-600 hover:bg-secondary-100">Cancel</a>
+                <button type="submit" class="btn btn-primary text-sm">
+                    <i class="fa-solid fa-check mr-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# ── Danger Zone ── #}
+    <div class="card mt-6 border-red-200">
+        <h3 class="text-sm font-semibold text-accent-error uppercase tracking-wide mb-3">Danger Zone</h3>
+        <p class="text-sm text-secondary-500 mb-4">Deleting a project is permanent and cannot be undone.</p>
+        <form method="post" action="/dashboard/projects/{{ project.id }}/delete" 
+              onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.')">
+            <button type="submit" class="btn text-sm text-accent-error bg-red-50 border border-red-200 hover:bg-red-100">
+                <i class="fa-solid fa-trash mr-2"></i> Delete Project
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

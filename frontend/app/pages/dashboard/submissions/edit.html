@@ -1,0 +1,189 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="/dashboard/submissions/{{ submission.id }}" class="text-sm text-secondary-400 hover:text-secondary-700">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Submission
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 class="text-xl font-bold text-secondary-900 mb-6">Edit Submission</h2>
+
+        <form method="post" action="/dashboard/submissions/{{ submission.id }}/edit" enctype="multipart/form-data" class="space-y-5">
+            {# ── Title ── #}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="title">Title</label>
+                <input type="text" id="title" name="title" required value="{{ submission.title }}"
+                       class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400">
+            </div>
+
+            {# ── Description ── #}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="description">Description</label>
+                <textarea id="description" name="description" rows="4"
+                          class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400 resize-y">{{ submission.description or '' }}</textarea>
+            </div>
+
+            {# ── Project (read-only) ── #}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700">Project</label>
+                <input type="text" value="{{ project.title }}" disabled
+                       class="w-full bg-secondary-50 border border-secondary-200 rounded-lg px-4 py-2.5 text-sm text-secondary-400 cursor-not-allowed">
+            </div>
+
+            {# ── Milestone ── #}
+            {% if milestones %}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="milestone_id">Milestone <span class="text-xs text-secondary-400 font-normal">(optional)</span></label>
+                <select id="milestone_id" name="milestone_id"
+                        class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">None</option>
+                    {% for m in milestones %}
+                    <option value="{{ m.id }}" {{ 'selected' if m.id == submission.milestone_id else '' }}>{{ m.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            {# ── Document Section ── #}
+            <div class="space-y-3">
+                <label class="text-sm font-medium text-secondary-700">Attached Document</label>
+
+                {# Current document display #}
+                {% if current_document %}
+                <a href="/dashboard/documents/{{ current_document.id }}" class="flex items-center gap-3 p-3 rounded-lg border border-primary-200 bg-primary-50/30 hover:bg-primary-50/60 transition-colors no-underline group" id="current-doc-card">
+                    <div class="w-9 h-9 rounded-lg bg-primary-50 text-primary flex items-center justify-center flex-shrink-0">
+                        {% if current_document.file_type in ['pdf'] %}
+                        <i class="fa-solid fa-file-pdf text-sm"></i>
+                        {% elif current_document.file_type in ['doc', 'docx'] %}
+                        <i class="fa-solid fa-file-word text-sm"></i>
+                        {% elif current_document.file_type in ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'] %}
+                        <i class="fa-solid fa-file-image text-sm"></i>
+                        {% else %}
+                        <i class="fa-solid fa-file text-sm"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-secondary-900 truncate group-hover:text-primary transition-colors">{{ current_document.title or current_document.file_name }}</p>
+                        <p class="text-xs text-secondary-400">
+                            {{ current_document.file_type | upper }} · v{{ current_document.version }}
+                            {% if current_document.file_size %} · {{ (current_document.file_size / 1024) | round(1) }}KB{% endif %}
+                        </p>
+                    </div>
+                    <span class="text-xs font-medium text-primary bg-primary-50 px-2 py-0.5 rounded-full">Current</span>
+                </a>
+                {% endif %}
+
+                {# Source selector tabs #}
+                <div class="flex rounded-lg border border-secondary-200 overflow-hidden">
+                    <button type="button" onclick="setDocSource('keep')" id="tab-keep"
+                            class="doc-tab flex-1 px-3 py-2 text-xs font-medium text-center transition-colors bg-primary text-white">
+                        <i class="fa-solid fa-link mr-1"></i> {{ 'Keep Current' if current_document else 'No Document' }}
+                    </button>
+                    <button type="button" onclick="setDocSource('upload')" id="tab-upload"
+                            class="doc-tab flex-1 px-3 py-2 text-xs font-medium text-center transition-colors bg-white text-secondary-600 hover:bg-secondary-50 border-l border-secondary-200">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload New
+                    </button>
+                    <button type="button" onclick="setDocSource('existing')" id="tab-existing"
+                            class="doc-tab flex-1 px-3 py-2 text-xs font-medium text-center transition-colors bg-white text-secondary-600 hover:bg-secondary-50 border-l border-secondary-200">
+                        <i class="fa-solid fa-folder-open mr-1"></i> Select Other
+                    </button>
+                    {% if current_document %}
+                    <button type="button" onclick="setDocSource('remove')" id="tab-remove"
+                            class="doc-tab flex-1 px-3 py-2 text-xs font-medium text-center transition-colors bg-white text-secondary-600 hover:bg-secondary-50 border-l border-secondary-200">
+                        <i class="fa-solid fa-xmark mr-1"></i> Remove
+                    </button>
+                    {% endif %}
+                </div>
+                <input type="hidden" name="doc_source" id="doc_source" value="keep">
+
+                {# Upload panel #}
+                <div id="panel-upload" class="hidden space-y-3 p-4 bg-secondary-50 rounded-lg border border-dashed border-secondary-300">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-secondary-600" for="file">Choose File</label>
+                        <input type="file" id="file" name="file"
+                               class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer file:mr-3 file:px-3 file:py-1 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary-50 file:text-primary hover:file:bg-primary-100"
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.zip,.rar,.jpg,.jpeg,.png,.py,.js,.ts,.java,.cpp,.c,.html,.css">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-secondary-600" for="doc_title">Document Title</label>
+                        <input type="text" id="doc_title" name="doc_title"
+                               class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-secondary-400"
+                               placeholder="Defaults to filename">
+                    </div>
+                </div>
+
+                {# Existing document panel #}
+                <div id="panel-existing" class="hidden">
+                    {% if documents %}
+                    <div class="max-h-[240px] overflow-y-auto rounded-lg border border-secondary-200">
+                        {% for doc in documents %}
+                        <label class="flex items-center gap-3 px-4 py-3 hover:bg-secondary-50 transition-colors cursor-pointer border-b border-secondary-100 last:border-b-0 {{ 'bg-primary-50/30' if doc.id == submission.document_id else '' }}">
+                            <input type="radio" name="existing_document_id" class="doc-radio text-primary focus:ring-primary" value="{{ doc.id }}"
+                                   {{ 'checked' if doc.id == submission.document_id else '' }}>
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-accent-info flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-file text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-secondary-900 truncate">{{ doc.title or doc.file_name }}</p>
+                                <p class="text-xs text-secondary-400">
+                                    {{ doc.file_type | upper }} · v{{ doc.version }}
+                                    {% if doc.file_size %} · {{ (doc.file_size / 1024) | round(1) }}KB{% endif %}
+                                    · {{ doc.created_at[:10] if doc.created_at else '' }}
+                                </p>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-secondary-400 text-center py-6 border border-secondary-200 rounded-lg">No other documents in this project</p>
+                    {% endif %}
+                </div>
+
+                {# Remove confirmation #}
+                <div id="panel-remove" class="hidden p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div class="flex items-center gap-2 text-sm text-accent-error">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>The document will be detached from this submission (the document itself won't be deleted).</span>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Submit ── #}
+            <div class="flex justify-end gap-3 pt-4 border-t border-secondary-100">
+                <a href="/dashboard/submissions/{{ submission.id }}" class="btn text-sm text-secondary-600 hover:bg-secondary-100">Cancel</a>
+                <button type="submit" class="btn btn-primary text-sm">
+                    <i class="fa-solid fa-check mr-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function setDocSource(source) {
+    document.getElementById('doc_source').value = source;
+
+    // Tab styling
+    document.querySelectorAll('.doc-tab').forEach(t => {
+        t.classList.remove('bg-primary', 'text-white');
+        t.classList.add('bg-white', 'text-secondary-600', 'hover:bg-secondary-50');
+    });
+    const active = document.getElementById('tab-' + source);
+    if (active) {
+        active.classList.remove('bg-white', 'text-secondary-600', 'hover:bg-secondary-50');
+        active.classList.add('bg-primary', 'text-white');
+    }
+
+    // Panels
+    document.getElementById('panel-upload').classList.toggle('hidden', source !== 'upload');
+    document.getElementById('panel-existing').classList.toggle('hidden', source !== 'existing');
+    const removePanel = document.getElementById('panel-remove');
+    if (removePanel) removePanel.classList.toggle('hidden', source !== 'remove');
+}
+</script>
+
+{% endblock %}

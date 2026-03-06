@@ -1,0 +1,42 @@
+{% for message in get_flashed_messages(request) %}
+<div class="flash-message fixed top-20 right-6 z-[100] min-w-[320px] max-w-[420px] p-4 rounded-xl border shadow-lg backdrop-blur-sm animate-slide-down
+    {% if message.category == 'error' %}
+    bg-red-50 border-red-200 text-red-700
+    {% elif message.category == 'success' %}
+    bg-emerald-50 border-emerald-200 text-emerald-700
+    {% elif message.category == 'warning' %}
+    bg-amber-50 border-amber-200 text-amber-700
+    {% else %}
+    bg-blue-50 border-blue-200 text-blue-700
+    {% endif %}
+">
+    <div class="flex items-center gap-3">
+        <div class="flex-shrink-0">
+            {% if message.category == 'error' %}
+            <i class="fa-solid fa-circle-xmark text-lg"></i>
+            {% elif message.category == 'success' %}
+            <i class="fa-solid fa-circle-check text-lg"></i>
+            {% elif message.category == 'warning' %}
+            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            {% else %}
+            <i class="fa-solid fa-circle-info text-lg"></i>
+            {% endif %}
+        </div>
+        <p class="font-medium text-sm flex-1">{{ message.message }}</p>
+        <button onclick="this.closest('.flash-message').remove()" class="opacity-60 hover:opacity-100 cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    setTimeout(() => {
+        const el = document.querySelector('.flash-message');
+        if (el) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(100%)';
+            setTimeout(() => el.remove(), 300);
+        }
+    }, 5000);
+</script>
+{% endfor %}

@@ -1,0 +1,67 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-xl font-bold text-secondary-900">Messages</h2>
+        <p class="text-sm text-secondary-400 mt-0.5">{{ contacts | length }} conversation{{ 's' if contacts | length != 1 else '' }}</p>
+    </div>
+    <a href="/dashboard/messages/new" class="btn btn-primary text-sm">
+        <i class="fa-solid fa-plus mr-2"></i> New Message
+    </a>
+</div>
+
+{% if contacts %}
+<div class="card p-0 overflow-hidden divide-y divide-secondary-100">
+    {% for c in contacts %}
+    <a href="/dashboard/messages/{{ c.user.id }}" class="flex items-center gap-4 px-5 py-4 hover:bg-secondary-50 transition-colors no-underline">
+        <div class="relative flex-shrink-0">
+            <div class="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                {{ c.user.first_name[0] }}{{ c.user.last_name[0] }}
+            </div>
+            {% if c.unread_count > 0 %}
+            <span class="absolute -top-0.5 -right-0.5 w-5 h-5 bg-accent-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {{ c.unread_count if c.unread_count < 10 else '9+' }}
+            </span>
+            {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+                <h3 class="text-sm font-semibold text-secondary-900 truncate">
+                    {{ c.user.first_name }} {{ c.user.last_name }}
+                </h3>
+                {% if c.last_message %}
+                <span class="text-xs text-secondary-400 flex-shrink-0 ml-2">
+                    {{ c.last_message.created_at[:10] if c.last_message.created_at else '' }}
+                </span>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-2">
+                <p class="text-xs text-secondary-400 capitalize px-1.5 py-0.5 bg-secondary-100 rounded">{{ c.user.role }}</p>
+                {% if c.last_message %}
+                <p class="text-sm text-secondary-500 truncate">{{ c.last_message.content[:60] }}{% if c.last_message.content | length > 60 %}...{% endif %}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% if c.unread_count > 0 %}
+        <div class="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0"></div>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="card text-center py-16">
+    <div class="w-16 h-16 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-comments text-2xl text-secondary-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-secondary-900 mb-1">No conversations yet</h3>
+    <p class="text-sm text-secondary-400 mb-4">Start a conversation with your {{ 'supervisor' if request.state.current_user.role == 'student' else 'students' }}</p>
+    <a href="/dashboard/messages/new" class="btn btn-primary text-sm inline-flex">
+        <i class="fa-solid fa-plus mr-2"></i> Start Conversation
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

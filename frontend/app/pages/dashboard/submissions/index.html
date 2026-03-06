@@ -1,0 +1,93 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-xl font-bold text-secondary-900">{{ page_title }}</h2>
+        <p class="text-sm text-secondary-400 mt-0.5">{{ pagination_data.total }} submission{{ 's' if pagination_data.total != 1 else '' }} total</p>
+    </div>
+    {% if request.state.current_user.role == 'student' %}
+    <a href="/dashboard/submissions/new" class="btn btn-primary text-sm">
+        <i class="fa-solid fa-plus mr-2"></i> New Submission
+    </a>
+    {% endif %}
+</div>
+
+{% if submissions %}
+{# Table for larger screens, cards for mobile #}
+<div class="card overflow-hidden p-0">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-secondary-50 border-b border-secondary-200">
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide">Title</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide hidden sm:table-cell">Project</th>
+                    {% if request.state.current_user.role != 'student' %}
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide hidden md:table-cell">Submitted By</th>
+                    {% endif %}
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide hidden lg:table-cell">Date</th>
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-secondary-500 uppercase tracking-wide">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-secondary-100">
+                {% for sub in submissions %}
+                <tr class="hover:bg-secondary-50/50 transition-colors cursor-pointer" onclick="window.location='/dashboard/submissions/{{ sub.id }}'">
+                    <td class="px-5 py-3.5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                                {% if sub.status == 'approved' %}bg-emerald-50 text-accent-success
+                                {% elif sub.status == 'submitted' %}bg-primary-50 text-primary
+                                {% elif sub.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                                {% elif sub.status == 'rejected' %}bg-red-50 text-accent-error
+                                {% else %}bg-secondary-100 text-secondary{% endif %}">
+                                <i class="fa-solid fa-file-lines text-xs"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-medium text-secondary-900 truncate hover:text-primary">{{ sub.title }}</p>
+                                <p class="text-xs text-secondary-400 sm:hidden truncate">{{ project_map.get(sub.project_id, 'Unknown') }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3.5 text-secondary-600 hidden sm:table-cell">
+                        <span class="truncate block max-w-[200px]">{{ project_map.get(sub.project_id, 'Unknown') }}</span>
+                    </td>
+                    {% if request.state.current_user.role != 'student' %}
+                    <td class="px-5 py-3.5 text-secondary-600 hidden md:table-cell">
+                        {{ submitter_map.get(sub.submitted_by, 'Unknown') }}
+                    </td>
+                    {% endif %}
+                    <td class="px-5 py-3.5 text-secondary-400 hidden lg:table-cell">
+                        {{ sub.created_at[:10] if sub.created_at else 'N/A' }}
+                    </td>
+                    <td class="px-5 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if sub.status == 'approved' %}bg-emerald-50 text-accent-success
+                            {% elif sub.status == 'submitted' %}bg-primary-50 text-primary
+                            {% elif sub.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                            {% elif sub.status == 'under_review' %}bg-blue-50 text-accent-info
+                            {% elif sub.status == 'rejected' %}bg-red-50 text-accent-error
+                            {% else %}bg-secondary-100 text-secondary{% endif %}">
+                            {{ sub.status | replace('_', ' ') | title }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% include "components/paginator.html" %}
+
+{% else %}
+<div class="card text-center py-16">
+    <div class="w-16 h-16 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-file-arrow-up text-2xl text-secondary-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-secondary-900 mb-1">No submissions yet</h3>
+    <p class="text-sm text-secondary-400">Submissions will appear here once created</p>
+</div>
+{% endif %}
+
+{% endblock %}

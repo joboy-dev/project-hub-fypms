@@ -1,0 +1,310 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+{% set is_supervisor_or_admin = request.state.current_user.role in ['supervisor', 'admin'] %}
+{% set is_submitter = submission.submitted_by == request.state.current_user.id %}
+
+<div class="mb-6 flex items-center justify-between">
+    <a href="/dashboard/submissions" class="text-sm text-secondary-400 hover:text-secondary-700">
+        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Submissions
+    </a>
+    <div class="flex items-center gap-2">
+        {% if is_submitter or request.state.current_user.role == 'admin' %}
+        <a href="/dashboard/submissions/{{ submission.id }}/edit" class="btn text-sm text-secondary-600 bg-secondary-50 border border-secondary-200 hover:bg-secondary-100">
+            <i class="fa-solid fa-pen mr-1"></i> Edit
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Submission Header ── #}
+<div class="card mb-6">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-2">
+                <h1 class="text-xl font-bold text-secondary-900">{{ submission.title }}</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0
+                    {% if submission.status == 'approved' %}bg-emerald-50 text-accent-success
+                    {% elif submission.status == 'submitted' %}bg-primary-50 text-primary
+                    {% elif submission.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                    {% elif submission.status == 'under_review' %}bg-blue-50 text-accent-info
+                    {% elif submission.status == 'rejected' %}bg-red-50 text-accent-error
+                    {% else %}bg-secondary-100 text-secondary{% endif %}">
+                    {{ submission.status | replace('_', ' ') | title }}
+                </span>
+            </div>
+            <p class="text-sm text-secondary-500 whitespace-pre-line">{{ submission.description or 'No description provided.' }}</p>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-4 mt-5 pt-4 border-t border-secondary-100 text-sm text-secondary-400">
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
+                {{ submitter.first_name[0] }}
+            </div>
+            <span>{{ submitter.first_name }} {{ submitter.last_name }}</span>
+        </div>
+        <a href="/dashboard/projects/{{ project.id }}" class="text-primary hover:text-primary-700 font-medium">
+            <i class="fa-solid fa-folder mr-1"></i> {{ project.title }}
+        </a>
+        {% if milestone %}
+        <span><i class="fa-solid fa-flag mr-1"></i> {{ milestone.title }}</span>
+        {% endif %}
+        <span><i class="fa-solid fa-calendar mr-1"></i> {{ submission.created_at[:10] if submission.created_at else 'N/A' }}</span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {# ── Left Column: Document & Feedback ── #}
+    <div class="lg:col-span-2 space-y-6">
+
+        {# ════ Attached Document ════ #}
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-3">
+                <i class="fa-solid fa-paperclip mr-1.5 text-secondary-400"></i> Attached Document
+            </h2>
+            {% if document %}
+            <a href="/dashboard/documents/{{ document.id }}" class="flex items-center gap-3 p-4 rounded-lg border border-secondary-100 bg-secondary-50/50 hover:border-primary-200 hover:bg-primary-50/30 transition-colors no-underline group">
+                <div class="w-11 h-11 rounded-xl bg-primary-50 text-primary flex items-center justify-center flex-shrink-0">
+                    {% if document.file_type in ['pdf'] %}
+                    <i class="fa-solid fa-file-pdf text-lg"></i>
+                    {% elif document.file_type in ['doc', 'docx'] %}
+                    <i class="fa-solid fa-file-word text-lg"></i>
+                    {% elif document.file_type in ['ppt', 'pptx'] %}
+                    <i class="fa-solid fa-file-powerpoint text-lg"></i>
+                    {% elif document.file_type in ['xls', 'xlsx'] %}
+                    <i class="fa-solid fa-file-excel text-lg"></i>
+                    {% elif document.file_type in ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'] %}
+                    <i class="fa-solid fa-file-image text-lg"></i>
+                    {% elif document.file_type in ['zip', 'rar', '7z'] %}
+                    <i class="fa-solid fa-file-zipper text-lg"></i>
+                    {% elif document.file_type in ['py', 'js', 'ts', 'java', 'cpp', 'c', 'html', 'css'] %}
+                    <i class="fa-solid fa-file-code text-lg"></i>
+                    {% else %}
+                    <i class="fa-solid fa-file text-lg"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-secondary-900 truncate group-hover:text-primary transition-colors">{{ document.title or document.file_name }}</p>
+                    <p class="text-xs text-secondary-400 mt-0.5">
+                        {{ document.file_type | upper }} &middot; v{{ document.version }}
+                        {% if document.file_size %} &middot; {{ (document.file_size / 1024) | round(1) }}KB{% endif %}
+                        &middot; {{ document.created_at[:10] if document.created_at else '' }}
+                    </p>
+                </div>
+                <span class="btn text-xs text-white bg-primary hover:bg-primary-700 shadow-sm">
+                    <i class="fa-solid fa-eye mr-1.5"></i> View
+                </span>
+            </a>
+            {% else %}
+            <div class="text-center py-8 rounded-lg border border-dashed border-secondary-200">
+                <div class="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-2">
+                    <i class="fa-solid fa-file-circle-xmark text-xl text-secondary-400"></i>
+                </div>
+                <p class="text-sm text-secondary-400">No document attached</p>
+                {% if is_submitter %}
+                <a href="/dashboard/submissions/{{ submission.id }}/edit" class="text-xs text-primary hover:text-primary-700 font-medium mt-2 inline-block">
+                    <i class="fa-solid fa-plus mr-1"></i> Attach a document
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# ════ Feedback Section ════ #}
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-secondary-900">
+                    <i class="fa-solid fa-comments mr-1.5 text-secondary-400"></i> Feedback
+                </h2>
+                <span class="text-xs text-secondary-400 bg-secondary-100 px-2 py-0.5 rounded-full">
+                    {{ feedbacks | length }} response{{ 's' if feedbacks | length != 1 else '' }}
+                </span>
+            </div>
+
+            {% if feedbacks %}
+            <div class="space-y-4">
+                {% for item in feedbacks %}
+                <div class="rounded-xl border border-secondary-100 overflow-hidden">
+                    {# Feedback header #}
+                    <div class="flex items-center justify-between px-4 py-3 bg-secondary-50/60">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-gold text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                {{ item.reviewer.first_name[0] }}{{ item.reviewer.last_name[0] }}
+                            </div>
+                            <div>
+                                <span class="text-sm font-semibold text-secondary-900">{{ item.reviewer.first_name }} {{ item.reviewer.last_name }}</span>
+                                <span class="text-xs text-secondary-400 ml-1.5 capitalize bg-secondary-100 px-1.5 py-0.5 rounded">{{ item.reviewer.role }}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            {% if item.feedback.grade %}
+                            <span class="text-sm font-bold text-gold-700 bg-gold-50 border border-gold-200 px-2.5 py-0.5 rounded-lg">{{ item.feedback.grade }}</span>
+                            {% endif %}
+                            <span class="text-xs text-secondary-400">{{ item.feedback.created_at[:10] if item.feedback.created_at else '' }}</span>
+                        </div>
+                    </div>
+
+                    {# Feedback content #}
+                    <div class="px-4 py-3">
+                        <p class="text-sm text-secondary-700 leading-relaxed whitespace-pre-line" id="feedback-content-{{ item.feedback.id }}">{{ item.feedback.content }}</p>
+                    </div>
+
+                    {# Actions (only for the reviewer who wrote it, or admin) #}
+                    {% if item.feedback.given_by == request.state.current_user.id or request.state.current_user.role == 'admin' %}
+                    <div class="flex items-center gap-3 px-4 py-2.5 bg-secondary-50/40 border-t border-secondary-100">
+                        <button type="button" onclick="toggleEditFeedback('{{ item.feedback.id }}')"
+                                class="text-xs text-primary hover:text-primary-700 font-medium cursor-pointer">
+                            <i class="fa-solid fa-pen mr-1"></i> Edit
+                        </button>
+                        <form method="post" action="/dashboard/submissions/{{ submission.id }}/feedback/{{ item.feedback.id }}/delete"
+                              onsubmit="return confirm('Delete this feedback?')" class="inline">
+                            <button type="submit" class="text-xs text-accent-error hover:text-red-700 font-medium cursor-pointer">
+                                <i class="fa-solid fa-trash mr-1"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+
+                    {# Inline edit form (hidden by default) #}
+                    <div id="edit-feedback-{{ item.feedback.id }}" class="hidden px-4 py-3 border-t border-secondary-100 bg-white">
+                        <form method="post" action="/dashboard/submissions/{{ submission.id }}/feedback/{{ item.feedback.id }}/edit" class="space-y-3">
+                            <textarea name="content" rows="3" required
+                                class="w-full bg-white border border-secondary-300 rounded-lg px-3 py-2 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary resize-y">{{ item.feedback.content }}</textarea>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <input type="text" name="grade" value="{{ item.feedback.grade or '' }}" maxlength="10"
+                                        class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-secondary-400"
+                                        placeholder="Grade (optional)">
+                                </div>
+                                <button type="button" onclick="toggleEditFeedback('{{ item.feedback.id }}')"
+                                        class="text-xs px-3 py-2 text-secondary-600 hover:bg-secondary-100 rounded-lg">Cancel</button>
+                                <button type="submit" class="text-xs px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 cursor-pointer">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 rounded-lg border border-dashed border-secondary-200">
+                <div class="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-2">
+                    <i class="fa-solid fa-comment-dots text-xl text-secondary-400"></i>
+                </div>
+                <p class="text-sm text-secondary-500 font-medium">No feedback yet</p>
+                {% if is_supervisor_or_admin %}
+                <p class="text-xs text-secondary-400 mt-1">Be the first to provide feedback on this submission</p>
+                {% else %}
+                <p class="text-xs text-secondary-400 mt-1">Your supervisor will provide feedback here</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Right Column: Actions ── #}
+    <div class="space-y-6">
+
+        {# ════ Review Actions (supervisor/admin only) ════ #}
+        {% if can_review %}
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-3">
+                <i class="fa-solid fa-clipboard-check mr-1.5 text-secondary-400"></i> Review
+            </h2>
+            <form method="post" action="/dashboard/submissions/{{ submission.id }}/status" class="space-y-3">
+                <select name="status" class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    {% for s in status_choices %}
+                    <option value="{{ s }}" {{ 'selected' if s == submission.status else '' }}>{{ s | replace('_', ' ') | title }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary text-sm w-full cursor-pointer">
+                    <i class="fa-solid fa-check mr-2"></i> Update Status
+                </button>
+            </form>
+        </div>
+
+        {# ════ Give Feedback Form ════ #}
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-3">
+                <i class="fa-solid fa-pen-fancy mr-1.5 text-secondary-400"></i> Give Feedback
+            </h2>
+            <form method="post" action="/dashboard/submissions/{{ submission.id }}/feedback/new" class="space-y-3">
+                <textarea name="content" rows="4" required
+                    class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary resize-y placeholder:text-secondary-400"
+                    placeholder="Write your feedback here..."></textarea>
+                <div class="space-y-1.5">
+                    <label class="text-xs font-medium text-secondary-600" for="grade">Grade <span class="text-xs text-secondary-400 font-normal">(optional)</span></label>
+                    <input type="text" name="grade" id="grade" maxlength="10"
+                        class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400"
+                        placeholder="e.g. A, B+, 85%">
+                </div>
+                <button type="submit" class="btn btn-primary text-sm w-full cursor-pointer">
+                    <i class="fa-solid fa-comment mr-2"></i> Submit Feedback
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        {# ════ Submission Info ════ #}
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-3">
+                <i class="fa-solid fa-circle-info mr-1.5 text-secondary-400"></i> Details
+            </h2>
+            <div class="space-y-3 text-sm">
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if submission.status == 'approved' %}bg-emerald-50 text-accent-success
+                        {% elif submission.status == 'submitted' %}bg-primary-50 text-primary
+                        {% elif submission.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                        {% elif submission.status == 'under_review' %}bg-blue-50 text-accent-info
+                        {% elif submission.status == 'rejected' %}bg-red-50 text-accent-error
+                        {% else %}bg-secondary-100 text-secondary{% endif %}">
+                        {{ submission.status | replace('_', ' ') | title }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Submitted</span>
+                    <span class="text-secondary-700">{{ submission.created_at[:10] if submission.created_at else 'N/A' }}</span>
+                </div>
+                {% if submission.updated_at and submission.updated_at != submission.created_at %}
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Last Updated</span>
+                    <span class="text-secondary-700">{{ submission.updated_at[:10] }}</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Feedback</span>
+                    <span class="text-secondary-700">{{ feedbacks | length }} response{{ 's' if feedbacks | length != 1 else '' }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-secondary-400">Document</span>
+                    <span class="text-secondary-700">{{ 'Attached' if document else 'None' }}</span>
+                </div>
+            </div>
+        </div>
+
+        {# ════ Danger Zone ════ #}
+        {% if is_submitter or request.state.current_user.role == 'admin' %}
+        <div class="card border-red-200">
+            <h3 class="text-xs font-semibold text-accent-error uppercase tracking-wide mb-3">Danger Zone</h3>
+            <form method="post" action="/dashboard/submissions/{{ submission.id }}/delete"
+                  onsubmit="return confirm('Delete this submission? This action cannot be undone.')">
+                <button type="submit" class="btn text-sm text-accent-error bg-red-50 border border-red-200 hover:bg-red-100 w-full cursor-pointer">
+                    <i class="fa-solid fa-trash mr-2"></i> Delete Submission
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleEditFeedback(feedbackId) {
+    const editForm = document.getElementById('edit-feedback-' + feedbackId);
+    editForm.classList.toggle('hidden');
+}
+</script>
+
+{% endblock %}

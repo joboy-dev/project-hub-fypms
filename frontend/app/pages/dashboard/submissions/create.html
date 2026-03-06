@@ -1,0 +1,206 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="/dashboard/submissions" class="text-sm text-secondary-400 hover:text-secondary-700">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Submissions
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 class="text-xl font-bold text-secondary-900 mb-6">New Submission</h2>
+
+        <form method="post" action="/dashboard/submissions/new" enctype="multipart/form-data" class="space-y-5">
+            {# ── Title ── #}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="title">Title <span class="text-accent-error">*</span></label>
+                <input type="text" id="title" name="title" required
+                       class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400"
+                       placeholder="e.g. Chapter 1 - Introduction">
+            </div>
+
+            {# ── Description ── #}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="description">Description</label>
+                <textarea id="description" name="description" rows="3"
+                          class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400 resize-y"
+                          placeholder="Describe what you're submitting..."></textarea>
+            </div>
+
+            {# ── Project ── #}
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="project_id">Project <span class="text-accent-error">*</span></label>
+                <select id="project_id" name="project_id" required onchange="onProjectChange(this.value)"
+                        class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">Select project</option>
+                    {% for p in projects %}
+                    <option value="{{ p.id }}" {{ 'selected' if p.id == selected_project else '' }}>{{ p.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# ── Milestone (dynamic based on project) ── #}
+            <div id="milestone-wrapper" class="space-y-1.5 hidden">
+                <label class="text-sm font-medium text-secondary-700" for="milestone_id">Milestone <span class="text-xs text-secondary-400 font-normal">(optional)</span></label>
+                <select id="milestone_id" name="milestone_id"
+                        class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">None</option>
+                </select>
+            </div>
+
+            {# ── Document Section ── #}
+            <div class="space-y-3">
+                <label class="text-sm font-medium text-secondary-700">Attach Document <span class="text-xs text-secondary-400 font-normal">(optional)</span></label>
+
+                {# Source selector tabs #}
+                <div class="flex rounded-lg border border-secondary-200 overflow-hidden">
+                    <button type="button" onclick="setDocSource('none')" id="tab-none"
+                            class="doc-tab flex-1 px-4 py-2 text-xs font-medium text-center transition-colors bg-primary text-white">
+                        <i class="fa-solid fa-ban mr-1"></i> No Document
+                    </button>
+                    <button type="button" onclick="setDocSource('upload')" id="tab-upload"
+                            class="doc-tab flex-1 px-4 py-2 text-xs font-medium text-center transition-colors bg-white text-secondary-600 hover:bg-secondary-50 border-l border-secondary-200">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Upload New
+                    </button>
+                    <button type="button" onclick="setDocSource('existing')" id="tab-existing"
+                            class="doc-tab flex-1 px-4 py-2 text-xs font-medium text-center transition-colors bg-white text-secondary-600 hover:bg-secondary-50 border-l border-secondary-200">
+                        <i class="fa-solid fa-folder-open mr-1"></i> Select Existing
+                    </button>
+                </div>
+                <input type="hidden" name="doc_source" id="doc_source" value="none">
+
+                {# Upload panel #}
+                <div id="panel-upload" class="hidden space-y-3 p-4 bg-secondary-50 rounded-lg border border-dashed border-secondary-300">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-secondary-600" for="file">Choose File</label>
+                        <input type="file" id="file" name="file"
+                               class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer file:mr-3 file:px-3 file:py-1 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary-50 file:text-primary hover:file:bg-primary-100"
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.zip,.rar,.jpg,.jpeg,.png,.py,.js,.ts,.java,.cpp,.c,.html,.css">
+                        <p class="text-xs text-secondary-400 mt-1">Max 10MB. Accepted: PDF, Word, PowerPoint, images, code files, archives</p>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-medium text-secondary-600" for="doc_title">Document Title <span class="text-xs text-secondary-400 font-normal">(defaults to filename)</span></label>
+                        <input type="text" id="doc_title" name="doc_title"
+                               class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-secondary-400"
+                               placeholder="e.g. Final Report Draft v1">
+                    </div>
+                </div>
+
+                {# Existing document panel #}
+                <div id="panel-existing" class="hidden space-y-2">
+                    <div id="existing-docs-list" class="max-h-[240px] overflow-y-auto rounded-lg border border-secondary-200">
+                        <p id="no-docs-msg" class="text-sm text-secondary-400 text-center py-6">Select a project first to see available documents</p>
+                    </div>
+                    <input type="hidden" name="existing_document_id" id="existing_document_id" value="">
+                </div>
+            </div>
+
+            {# ── Submit ── #}
+            <div class="flex justify-end gap-3 pt-4 border-t border-secondary-100">
+                <a href="/dashboard/submissions" class="btn text-sm text-secondary-600 hover:bg-secondary-100">Cancel</a>
+                <button type="submit" class="btn btn-primary text-sm">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Data from the server
+const projectDocuments = {{ project_documents | tojson }};
+const projectMilestones = {{ project_milestones | tojson }};
+
+// ── Project Change: update milestones & documents ──
+function onProjectChange(projectId) {
+    // Milestones
+    const mWrapper = document.getElementById('milestone-wrapper');
+    const mSelect = document.getElementById('milestone_id');
+    mSelect.innerHTML = '<option value="">None</option>';
+
+    if (projectId && projectMilestones[projectId] && projectMilestones[projectId].length > 0) {
+        projectMilestones[projectId].forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.title;
+            mSelect.appendChild(opt);
+        });
+        mWrapper.classList.remove('hidden');
+    } else {
+        mWrapper.classList.add('hidden');
+    }
+
+    // Update existing docs panel
+    renderExistingDocs(projectId);
+}
+
+// ── Document source tabs ──
+function setDocSource(source) {
+    document.getElementById('doc_source').value = source;
+
+    // Tab styling
+    document.querySelectorAll('.doc-tab').forEach(t => {
+        t.classList.remove('bg-primary', 'text-white');
+        t.classList.add('bg-white', 'text-secondary-600', 'hover:bg-secondary-50');
+    });
+    const active = document.getElementById('tab-' + source);
+    active.classList.remove('bg-white', 'text-secondary-600', 'hover:bg-secondary-50');
+    active.classList.add('bg-primary', 'text-white');
+
+    // Panels
+    document.getElementById('panel-upload').classList.toggle('hidden', source !== 'upload');
+    document.getElementById('panel-existing').classList.toggle('hidden', source !== 'existing');
+
+    // Clear selections when switching
+    if (source !== 'upload') document.getElementById('file').value = '';
+    if (source !== 'existing') {
+        document.getElementById('existing_document_id').value = '';
+        document.querySelectorAll('.doc-radio').forEach(r => r.checked = false);
+    }
+}
+
+// ── Render existing documents for selected project ──
+function renderExistingDocs(projectId) {
+    const container = document.getElementById('existing-docs-list');
+    const noMsg = document.getElementById('no-docs-msg');
+    const docs = projectId ? (projectDocuments[projectId] || []) : [];
+
+    if (!projectId) {
+        container.innerHTML = '<p class="text-sm text-secondary-400 text-center py-6">Select a project first to see available documents</p>';
+        return;
+    }
+    if (docs.length === 0) {
+        container.innerHTML = '<p class="text-sm text-secondary-400 text-center py-6">No documents uploaded for this project yet</p>';
+        return;
+    }
+
+    let html = '';
+    docs.forEach(doc => {
+        const sizeKb = doc.file_size ? (doc.file_size / 1024).toFixed(1) + 'KB' : '';
+        const date = doc.created_at ? doc.created_at.slice(0, 10) : '';
+        html += `
+        <label class="flex items-center gap-3 px-4 py-3 hover:bg-secondary-50 transition-colors cursor-pointer border-b border-secondary-100 last:border-b-0">
+            <input type="radio" name="doc_radio" class="doc-radio text-primary focus:ring-primary" value="${doc.id}"
+                   onchange="document.getElementById('existing_document_id').value='${doc.id}'">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-accent-info flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-file text-xs"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-secondary-900 truncate">${doc.title || doc.file_name}</p>
+                <p class="text-xs text-secondary-400">${(doc.file_type || '').toUpperCase()} ${sizeKb ? '· ' + sizeKb : ''} ${date ? '· ' + date : ''}</p>
+            </div>
+        </label>`;
+    });
+    container.innerHTML = html;
+}
+
+// Initialize if project pre-selected
+document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('project_id').value;
+    if (sel) onProjectChange(sel);
+});
+</script>
+
+{% endblock %}

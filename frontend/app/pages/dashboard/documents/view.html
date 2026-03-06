@@ -1,0 +1,142 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="mb-6 flex items-center justify-between">
+    <a href="/dashboard/projects/{{ project.id }}" class="text-sm text-secondary-400 hover:text-secondary-700">
+        <i class="fa-solid fa-arrow-left mr-1"></i> Back to {{ project.title }}
+    </a>
+    {% if view_url %}
+    <a href="{{ view_url }}" target="_blank" class="btn text-sm text-white bg-primary hover:bg-primary-700 shadow-sm">
+        <i class="fa-solid fa-up-right-from-square mr-1.5"></i> Open in New Tab
+    </a>
+    {% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    {# ── Left: Document Viewer ── #}
+    <div class="lg:col-span-3">
+        <div class="card p-0 overflow-hidden">
+            {% if view_url %}
+                {% if is_pdf %}
+                {# PDF: embed in iframe #}
+                <iframe src="{{ view_url }}" class="w-full border-0" style="min-height: 80vh;" title="{{ document.title }}"></iframe>
+
+                {% elif is_image %}
+                {# Image: show inline #}
+                <div class="flex items-center justify-center bg-secondary-50 p-6" style="min-height: 50vh;">
+                    <img src="{{ view_url }}" alt="{{ document.title }}" class="max-w-full max-h-[75vh] rounded-lg shadow-sm object-contain">
+                </div>
+
+                {% elif is_text %}
+                {# Text/Code: embed in iframe with scroll #}
+                <iframe src="{{ view_url }}" class="w-full border-0 bg-white" style="min-height: 70vh;" title="{{ document.title }}"></iframe>
+
+                {% else %}
+                {# Non-viewable: download prompt #}
+                <div class="flex flex-col items-center justify-center py-20 px-6 text-center bg-secondary-50/50" style="min-height: 50vh;">
+                    <div class="w-20 h-20 rounded-2xl bg-primary-50 text-primary flex items-center justify-center mb-5">
+                        {% if document.file_type in ['doc', 'docx'] %}
+                        <i class="fa-solid fa-file-word text-3xl"></i>
+                        {% elif document.file_type in ['ppt', 'pptx'] %}
+                        <i class="fa-solid fa-file-powerpoint text-3xl"></i>
+                        {% elif document.file_type in ['xls', 'xlsx'] %}
+                        <i class="fa-solid fa-file-excel text-3xl"></i>
+                        {% elif document.file_type in ['zip', 'rar', '7z'] %}
+                        <i class="fa-solid fa-file-zipper text-3xl"></i>
+                        {% else %}
+                        <i class="fa-solid fa-file text-3xl"></i>
+                        {% endif %}
+                    </div>
+                    <h3 class="text-lg font-semibold text-secondary-900 mb-1">{{ document.title or document.file_name }}</h3>
+                    <p class="text-sm text-secondary-400 mb-6">
+                        This file type (.{{ document.file_type }}) cannot be previewed in the browser.
+                    </p>
+                    <a href="{{ view_url }}" download class="btn btn-primary text-sm shadow-sm">
+                        <i class="fa-solid fa-download mr-2"></i> Download File
+                    </a>
+                </div>
+                {% endif %}
+            {% else %}
+            {# No URL available #}
+            <div class="flex flex-col items-center justify-center py-20 text-center" style="min-height: 50vh;">
+                <div class="w-16 h-16 rounded-full bg-secondary-100 flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-file-circle-xmark text-2xl text-secondary-400"></i>
+                </div>
+                <p class="text-sm text-secondary-500 font-medium">File not available</p>
+                <p class="text-xs text-secondary-400 mt-1">The document file could not be located</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Right: Document Info Sidebar ── #}
+    <div class="space-y-6">
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-4">
+                <i class="fa-solid fa-circle-info mr-1.5 text-secondary-400"></i> Document Info
+            </h2>
+            <div class="space-y-3 text-sm">
+                <div class="py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400 block text-xs mb-0.5">Title</span>
+                    <span class="text-secondary-900 font-medium">{{ document.title or document.file_name }}</span>
+                </div>
+                <div class="py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400 block text-xs mb-0.5">File Name</span>
+                    <span class="text-secondary-700 break-all">{{ document.file_name }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Type</span>
+                    <span class="text-secondary-700 uppercase font-medium text-xs bg-secondary-100 px-2 py-0.5 rounded">{{ document.file_type or 'Unknown' }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Version</span>
+                    <span class="text-secondary-700">v{{ document.version }}</span>
+                </div>
+                {% if document.file_size %}
+                <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400">Size</span>
+                    <span class="text-secondary-700">
+                        {% if document.file_size >= 1048576 %}
+                            {{ (document.file_size / 1048576) | round(1) }} MB
+                        {% else %}
+                            {{ (document.file_size / 1024) | round(1) }} KB
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400 block text-xs mb-0.5">Project</span>
+                    <a href="/dashboard/projects/{{ project.id }}" class="text-primary hover:text-primary-700 font-medium text-sm">
+                        {{ project.title }}
+                    </a>
+                </div>
+                <div class="py-2 border-b border-secondary-100">
+                    <span class="text-secondary-400 block text-xs mb-0.5">Uploaded By</span>
+                    <span class="text-secondary-700">{{ uploader.first_name }} {{ uploader.last_name }}</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-secondary-400">Uploaded</span>
+                    <span class="text-secondary-700">{{ document.created_at[:10] if document.created_at else 'N/A' }}</span>
+                </div>
+            </div>
+
+            {% if document.description %}
+            <div class="mt-4 pt-4 border-t border-secondary-100">
+                <span class="text-xs text-secondary-400 block mb-1">Description</span>
+                <p class="text-sm text-secondary-600 whitespace-pre-line">{{ document.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if view_url %}
+        <div class="card">
+            <a href="{{ view_url }}" download class="btn text-sm text-white bg-primary hover:bg-primary-700 w-full shadow-sm">
+                <i class="fa-solid fa-download mr-2"></i> Download
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

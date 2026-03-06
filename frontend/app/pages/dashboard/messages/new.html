@@ -1,0 +1,71 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="/dashboard/messages" class="text-sm text-secondary-400 hover:text-secondary-700">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Messages
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 class="text-xl font-bold text-secondary-900 mb-2">New Conversation</h2>
+        <p class="text-sm text-secondary-400 mb-6">Select a user to start a conversation with.</p>
+
+        {% if users %}
+        <div class="mb-4">
+            <div class="relative">
+                <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400 text-sm"></i>
+                <input type="text" id="user-search"
+                       class="w-full bg-white border border-secondary-300 rounded-lg pl-10 pr-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400"
+                       placeholder="Search by name or email..." oninput="filterUsers(this.value)">
+            </div>
+        </div>
+
+        <div id="user-list" class="divide-y divide-secondary-100 max-h-[400px] overflow-y-auto rounded-lg border border-secondary-100">
+            {% for u in users %}
+            <a href="/dashboard/messages/{{ u.id }}" class="user-item flex items-center gap-4 px-4 py-3 hover:bg-secondary-50 transition-colors no-underline" data-name="{{ u.first_name | lower }} {{ u.last_name | lower }}" data-email="{{ u.email | lower }}">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0
+                    {% if u.role == 'admin' %}bg-secondary-800 text-white
+                    {% elif u.role == 'supervisor' %}bg-gold text-white
+                    {% else %}bg-primary text-white{% endif %}">
+                    {{ u.first_name[0] }}{{ u.last_name[0] }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-secondary-900 truncate">{{ u.first_name }} {{ u.last_name }}</p>
+                    <p class="text-xs text-secondary-400 truncate">{{ u.email }}</p>
+                </div>
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full capitalize
+                    {% if u.role == 'admin' %}bg-secondary-100 text-secondary-600
+                    {% elif u.role == 'supervisor' %}bg-gold-50 text-gold-700
+                    {% else %}bg-primary-50 text-primary{% endif %}">
+                    {{ u.role }}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-14 h-14 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-users text-xl text-secondary-400"></i>
+            </div>
+            <p class="text-sm text-secondary-400">No users available to message</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function filterUsers(query) {
+    const items = document.querySelectorAll('.user-item');
+    const q = query.toLowerCase().trim();
+    items.forEach(item => {
+        const name = item.dataset.name;
+        const email = item.dataset.email;
+        item.style.display = (!q || name.includes(q) || email.includes(q)) ? '' : 'none';
+    });
+}
+</script>
+
+{% endblock %}

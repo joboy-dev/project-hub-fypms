@@ -1,0 +1,109 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="max-w-2xl mx-auto space-y-6">
+
+    {# ── Profile Section ── #}
+    <div class="card">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold flex-shrink-0">
+                {{ profile.first_name[0] }}{{ profile.last_name[0] }}
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold text-secondary-900">{{ profile.first_name }} {{ profile.last_name }}</h2>
+                <p class="text-sm text-secondary-400">{{ profile.email }}</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize mt-1
+                    {% if profile.role == 'admin' %}bg-secondary-800 text-white
+                    {% elif profile.role == 'supervisor' %}bg-gold-50 text-gold-700
+                    {% else %}bg-primary-50 text-primary{% endif %}">
+                    {{ profile.role }}
+                </span>
+            </div>
+        </div>
+
+        <form method="post" action="/dashboard/settings/profile" class="space-y-4">
+            <h3 class="text-sm font-semibold text-secondary-900 uppercase tracking-wide">Personal Information</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" value="{{ profile.first_name }}" required
+                           class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" value="{{ profile.last_name }}" required
+                           class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                </div>
+            </div>
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700">Email</label>
+                <input type="email" value="{{ profile.email }}" disabled
+                       class="w-full bg-secondary-50 border border-secondary-200 rounded-lg px-4 py-2.5 text-sm text-secondary-400 cursor-not-allowed">
+                <p class="text-xs text-secondary-400">Contact an admin to change your email</p>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="btn btn-primary text-sm">
+                    <i class="fa-solid fa-check mr-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# ── Change Password ── #}
+    <div class="card">
+        <h3 class="text-sm font-semibold text-secondary-900 uppercase tracking-wide mb-4">Change Password</h3>
+        <form method="post" action="/dashboard/settings/password" class="space-y-4">
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="old_password">Current Password</label>
+                <input type="password" id="old_password" name="old_password" required
+                       class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                       placeholder="Enter current password">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" required minlength="8"
+                           class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="Min. 8 characters">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required minlength="8"
+                           class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                           placeholder="Repeat new password">
+                </div>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="btn text-sm text-secondary-700 bg-secondary-50 border border-secondary-200 hover:bg-secondary-100">
+                    <i class="fa-solid fa-key mr-2"></i> Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# ── Account Info ── #}
+    <div class="card">
+        <h3 class="text-sm font-semibold text-secondary-900 uppercase tracking-wide mb-4">Account Information</h3>
+        <div class="space-y-3 text-sm">
+            <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                <span class="text-secondary-400">Role</span>
+                <span class="font-medium text-secondary-900 capitalize">{{ profile.role }}</span>
+            </div>
+            <div class="flex items-center justify-between py-2 border-b border-secondary-100">
+                <span class="text-secondary-400">Status</span>
+                <span class="inline-flex items-center gap-1 font-medium {% if profile.is_active %}text-accent-success{% else %}text-secondary-400{% endif %}">
+                    <span class="w-1.5 h-1.5 rounded-full {% if profile.is_active %}bg-accent-success{% else %}bg-secondary-300{% endif %}"></span>
+                    {{ 'Active' if profile.is_active else 'Inactive' }}
+                </span>
+            </div>
+            <div class="flex items-center justify-between py-2">
+                <span class="text-secondary-400">Member since</span>
+                <span class="font-medium text-secondary-900">{{ profile.created_at[:10] if profile.created_at else 'N/A' }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

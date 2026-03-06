@@ -1,0 +1,261 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+{% set user_role = request.state.current_user.role %}
+
+{# ── Stat Cards ── #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+    {% if user_role == 'student' %}
+    <div class="card group hover:border-primary-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Projects</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_projects }}</p>
+        <p class="text-xs text-secondary-400 mt-1">{{ stats.active_projects }} active</p>
+    </div>
+    <div class="card group hover:border-gold-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-gold-50 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-white transition-colors">
+                <i class="fa-solid fa-file-arrow-up"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Submissions</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_submissions }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Total submitted</p>
+    </div>
+    <div class="card group hover:border-green-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-accent-success flex items-center justify-center group-hover:bg-accent-success group-hover:text-white transition-colors">
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Milestones</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.pending_milestones }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Pending tasks</p>
+    </div>
+    <div class="card group hover:border-blue-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-accent-info flex items-center justify-center group-hover:bg-accent-info group-hover:text-white transition-colors">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Messages</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.unread_messages }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Unread</p>
+    </div>
+
+    {% elif user_role == 'supervisor' %}
+    <div class="card group hover:border-primary-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Projects</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.supervised_projects }}</p>
+        <p class="text-xs text-secondary-400 mt-1">{{ stats.active_projects }} active</p>
+    </div>
+    <div class="card group hover:border-gold-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-gold-50 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-white transition-colors">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Students</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_students }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Under supervision</p>
+    </div>
+    <div class="card group hover:border-orange-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 text-accent-warning flex items-center justify-center group-hover:bg-accent-warning group-hover:text-white transition-colors">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Pending</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.pending_reviews }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Awaiting review</p>
+    </div>
+    <div class="card group hover:border-blue-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-accent-info flex items-center justify-center group-hover:bg-accent-info group-hover:text-white transition-colors">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Messages</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.unread_messages }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Unread</p>
+    </div>
+
+    {% else %}
+    {# Admin #}
+    <div class="card group hover:border-primary-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Projects</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_projects }}</p>
+        <p class="text-xs text-secondary-400 mt-1">{{ stats.active_projects }} active</p>
+    </div>
+    <div class="card group hover:border-gold-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-gold-50 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-white transition-colors">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Users</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_users }}</p>
+        <p class="text-xs text-secondary-400 mt-1">{{ stats.total_students }} students · {{ stats.total_supervisors }} supervisors</p>
+    </div>
+    <div class="card group hover:border-green-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-accent-success flex items-center justify-center group-hover:bg-accent-success group-hover:text-white transition-colors">
+                <i class="fa-solid fa-building-columns"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Departments</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_departments }}</p>
+        <p class="text-xs text-secondary-400 mt-1">Registered</p>
+    </div>
+    <div class="card group hover:border-orange-200">
+        <div class="flex items-center justify-between mb-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 text-accent-warning flex items-center justify-center group-hover:bg-accent-warning group-hover:text-white transition-colors">
+                <i class="fa-solid fa-file-arrow-up"></i>
+            </div>
+            <span class="text-xs font-medium text-secondary-400 uppercase tracking-wide">Submissions</span>
+        </div>
+        <p class="text-2xl font-bold text-secondary-900">{{ stats.total_submissions }}</p>
+        <p class="text-xs text-secondary-400 mt-1">{{ stats.pending_submissions }} pending</p>
+    </div>
+    {% endif %}
+</div>
+
+{# ── Recent Activity ── #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {# Main panel #}
+    <div class="lg:col-span-2">
+        <div class="card">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-lg font-semibold text-secondary-900">
+                    {% if user_role == 'admin' %}Recent Projects{% else %}Recent Submissions{% endif %}
+                </h2>
+                <a href="{% if user_role == 'admin' %}/dashboard/projects{% else %}/dashboard/submissions{% endif %}" 
+                   class="text-sm text-primary font-medium hover:text-primary-700">View all →</a>
+            </div>
+
+            {% if user_role == 'admin' %}
+                {% if stats.recent_projects %}
+                <div class="space-y-3">
+                    {% for project in stats.recent_projects %}
+                    <a href="/dashboard/projects/{{ project.id }}" class="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary-50 transition-colors no-underline">
+                        <div class="w-10 h-10 rounded-lg bg-primary-50 text-primary flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-folder text-sm"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-secondary-900 truncate">{{ project.title }}</p>
+                            <p class="text-xs text-secondary-400">{{ project.created_at.strftime('%b %d, %Y') if project.created_at else '' }}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if project.status == 'completed' %}bg-emerald-50 text-accent-success
+                            {% elif project.status == 'in_progress' %}bg-primary-50 text-primary
+                            {% elif project.status == 'rejected' %}bg-red-50 text-accent-error
+                            {% else %}bg-secondary-100 text-secondary{% endif %}">
+                            {{ project.status | replace('_', ' ') | title }}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fa-solid fa-folder-open text-3xl text-secondary-300 mb-3"></i>
+                    <p class="text-secondary-400 text-sm">No projects yet</p>
+                </div>
+                {% endif %}
+
+            {% else %}
+                {% if stats.recent_submissions %}
+                <div class="space-y-3">
+                    {% for sub in stats.recent_submissions %}
+                    <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary-50 transition-colors">
+                        <div class="w-10 h-10 rounded-lg 
+                            {% if sub.status == 'approved' %}bg-emerald-50 text-accent-success
+                            {% elif sub.status == 'submitted' %}bg-primary-50 text-primary
+                            {% elif sub.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                            {% elif sub.status == 'rejected' %}bg-red-50 text-accent-error
+                            {% else %}bg-secondary-100 text-secondary{% endif %}
+                            flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-file-lines text-sm"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-secondary-900 truncate">{{ sub.title }}</p>
+                            <p class="text-xs text-secondary-400">{{ sub.created_at.strftime('%b %d, %Y') if sub.created_at else '' }}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if sub.status == 'approved' %}bg-emerald-50 text-accent-success
+                            {% elif sub.status == 'submitted' %}bg-primary-50 text-primary
+                            {% elif sub.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                            {% elif sub.status == 'rejected' %}bg-red-50 text-accent-error
+                            {% else %}bg-secondary-100 text-secondary{% endif %}">
+                            {{ sub.status | replace('_', ' ') | title }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fa-solid fa-file-arrow-up text-3xl text-secondary-300 mb-3"></i>
+                    <p class="text-secondary-400 text-sm">No submissions yet</p>
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    {# Side panel – Quick actions #}
+    <div class="space-y-6">
+        <div class="card">
+            <h3 class="text-sm font-semibold text-secondary-900 mb-4 uppercase tracking-wide">Quick Actions</h3>
+            <div class="space-y-2">
+                {% if user_role == 'student' %}
+                <a href="/dashboard/projects/new" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-plus w-5 text-center text-secondary-400"></i>
+                    New Project
+                </a>
+                <a href="/dashboard/messages" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-paper-plane w-5 text-center text-secondary-400"></i>
+                    Send Message
+                </a>
+                {% elif user_role == 'supervisor' %}
+                <a href="/dashboard/submissions" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-clock w-5 text-center text-secondary-400"></i>
+                    Review Submissions
+                </a>
+                <a href="/dashboard/students" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-user-graduate w-5 text-center text-secondary-400"></i>
+                    View Students
+                </a>
+                {% else %}
+                <a href="/dashboard/users" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-user-plus w-5 text-center text-secondary-400"></i>
+                    Manage Users
+                </a>
+                <a href="/dashboard/departments" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-building-columns w-5 text-center text-secondary-400"></i>
+                    Manage Departments
+                </a>
+                {% endif %}
+                <a href="/dashboard/settings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-secondary-700 hover:bg-primary-50 hover:text-primary transition-colors no-underline">
+                    <i class="fa-solid fa-gear w-5 text-center text-secondary-400"></i>
+                    Account Settings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

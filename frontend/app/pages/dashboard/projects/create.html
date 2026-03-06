@@ -1,0 +1,64 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="/dashboard/projects" class="text-sm text-secondary-400 hover:text-secondary-700">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Back to Projects
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 class="text-xl font-bold text-secondary-900 mb-6">Create New Project</h2>
+
+        <form method="post" action="/dashboard/projects/new" class="space-y-5">
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="title">Project Title</label>
+                <input type="text" id="title" name="title" required
+                       class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400"
+                       placeholder="e.g. Smart Attendance System">
+            </div>
+
+            <div class="space-y-1.5">
+                <label class="text-sm font-medium text-secondary-700" for="description">Description</label>
+                <textarea id="description" name="description" rows="4"
+                          class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-secondary-400 resize-y"
+                          placeholder="Describe your project..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="department_id">Department</label>
+                    <select id="department_id" name="department_id"
+                            class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Select department</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }} ({{ dept.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-sm font-medium text-secondary-700" for="supervisor_id">Supervisor</label>
+                    <select id="supervisor_id" name="supervisor_id"
+                            class="w-full bg-white border border-secondary-300 rounded-lg px-4 py-2.5 text-sm text-secondary-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Select supervisor</option>
+                        {% for s in supervisors %}
+                        <option value="{{ s.id }}">{{ s.first_name }} {{ s.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-secondary-100">
+                <a href="/dashboard/projects" class="btn text-sm text-secondary-600 hover:bg-secondary-100">Cancel</a>
+                <button type="submit" class="btn btn-primary text-sm">
+                    <i class="fa-solid fa-plus mr-2"></i> Create Project
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

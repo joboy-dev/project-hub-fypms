@@ -1,0 +1,127 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<div class="flex items-center justify-between mb-6">
+    <a href="/dashboard/users" class="text-sm text-secondary-400 hover:text-secondary-700">
+        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Users
+    </a>
+    <div class="flex items-center gap-2">
+        <a href="/dashboard/users/{{ target_user.id }}/edit" class="btn text-sm bg-secondary-100 text-secondary-700 hover:bg-secondary-200">
+            <i class="fa-solid fa-pen-to-square mr-1.5"></i> Edit
+        </a>
+        <form method="post" action="/dashboard/users/{{ target_user.id }}/toggle-active" class="inline">
+            <button type="submit" class="btn text-sm cursor-pointer
+                {% if target_user.is_active %}bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100
+                {% else %}bg-emerald-50 text-accent-success border border-emerald-200 hover:bg-emerald-100{% endif %}">
+                <i class="fa-solid fa-{{ 'ban' if target_user.is_active else 'check' }} mr-1.5"></i>
+                {{ 'Deactivate' if target_user.is_active else 'Activate' }}
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {# ── Profile Card ── #}
+    <div class="lg:col-span-1">
+        <div class="card text-center">
+            <div class="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-2xl font-bold mb-4
+                {% if target_user.role == 'admin' %}bg-secondary-800 text-white
+                {% elif target_user.role == 'supervisor' %}bg-gold text-white
+                {% else %}bg-primary text-white{% endif %}">
+                {{ target_user.first_name[0] }}{{ target_user.last_name[0] }}
+            </div>
+            <h2 class="text-lg font-bold text-secondary-900">{{ target_user.first_name }} {{ target_user.last_name }}</h2>
+            <p class="text-sm text-secondary-400 mt-0.5">{{ target_user.email }}</p>
+
+            <div class="flex items-center justify-center gap-3 mt-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize
+                    {% if target_user.role == 'admin' %}bg-secondary-800 text-white
+                    {% elif target_user.role == 'supervisor' %}bg-gold-50 text-gold-700
+                    {% else %}bg-primary-50 text-primary{% endif %}">
+                    {{ target_user.role }}
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-xs font-medium
+                    {% if target_user.is_active %}text-accent-success{% else %}text-secondary-400{% endif %}">
+                    <span class="w-2 h-2 rounded-full {% if target_user.is_active %}bg-accent-success{% else %}bg-secondary-300{% endif %}"></span>
+                    {{ 'Active' if target_user.is_active else 'Inactive' }}
+                </span>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-secondary-100 space-y-3 text-left">
+                {% if department %}
+                <div class="flex items-center gap-3 text-sm">
+                    <i class="fa-solid fa-building-columns w-4 text-center text-secondary-400"></i>
+                    <span class="text-secondary-600">{{ department.name }} ({{ department.code }})</span>
+                </div>
+                {% endif %}
+                <div class="flex items-center gap-3 text-sm">
+                    <i class="fa-solid fa-calendar w-4 text-center text-secondary-400"></i>
+                    <span class="text-secondary-600">Joined {{ target_user.created_at[:10] if target_user.created_at else 'N/A' }}</span>
+                </div>
+                {% if target_user.last_login %}
+                <div class="flex items-center gap-3 text-sm">
+                    <i class="fa-solid fa-clock w-4 text-center text-secondary-400"></i>
+                    <span class="text-secondary-600">Last login {{ target_user.last_login[:10] }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── Danger Zone ── #}
+        {% if target_user.id != request.state.current_user.id %}
+        <div class="card mt-6 border-red-200">
+            <h3 class="text-xs font-semibold text-accent-error uppercase tracking-wide mb-3">Danger Zone</h3>
+            <form method="post" action="/dashboard/users/{{ target_user.id }}/delete"
+                  onsubmit="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                <button type="submit" class="btn text-sm text-accent-error bg-red-50 border border-red-200 hover:bg-red-100 w-full">
+                    <i class="fa-solid fa-trash mr-2"></i> Delete User
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Projects ── #}
+    <div class="lg:col-span-2">
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-secondary-900">Projects</h2>
+                <span class="text-xs text-secondary-400">{{ projects | length }} project{{ 's' if projects | length != 1 else '' }}</span>
+            </div>
+
+            {% if projects %}
+            <div class="space-y-3">
+                {% for p in projects %}
+                <a href="/dashboard/projects/{{ p.id }}" class="flex items-center gap-4 p-3 rounded-lg border border-secondary-100 hover:border-primary-200 transition-colors no-underline group">
+                    <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center flex-shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-diagram-project text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-secondary-900 truncate group-hover:text-primary">{{ p.title }}</p>
+                        <p class="text-xs text-secondary-400">{{ p.created_at[:10] if p.created_at else '' }}</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if p.status == 'completed' %}bg-emerald-50 text-accent-success
+                        {% elif p.status == 'in_progress' %}bg-primary-50 text-primary
+                        {% elif p.status == 'approved' %}bg-blue-50 text-accent-info
+                        {% elif p.status == 'rejected' %}bg-red-50 text-accent-error
+                        {% else %}bg-secondary-100 text-secondary{% endif %}">
+                        {{ p.status | replace('_', ' ') | title }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="w-12 h-12 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-diagram-project text-xl text-secondary-400"></i>
+                </div>
+                <p class="text-sm text-secondary-400">This user has no projects</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

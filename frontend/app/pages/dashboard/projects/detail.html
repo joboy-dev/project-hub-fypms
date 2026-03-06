@@ -1,0 +1,456 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+{% set can_manage = is_owner or request.state.current_user.role in ['admin', 'supervisor'] %}
+
+<div class="flex items-center justify-between mb-6">
+    <a href="/dashboard/projects" class="text-sm text-secondary-400 hover:text-secondary-700">
+        <i class="fa-solid fa-arrow-left mr-1"></i> Back to Projects
+    </a>
+    {% if can_manage %}
+    <div class="flex items-center gap-2">
+        <a href="/dashboard/projects/{{ project.id }}/edit" class="btn text-sm bg-secondary-100 text-secondary-700 hover:bg-secondary-200">
+            <i class="fa-solid fa-pen-to-square mr-1.5"></i> Edit
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{# ── Project Header ── #}
+<div class="card mb-6">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-3 mb-2">
+                <h1 class="text-xl font-bold text-secondary-900 truncate">{{ project.title }}</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0
+                    {% if project.status == 'completed' %}bg-emerald-50 text-accent-success
+                    {% elif project.status == 'in_progress' %}bg-primary-50 text-primary
+                    {% elif project.status == 'approved' %}bg-blue-50 text-accent-info
+                    {% elif project.status == 'rejected' %}bg-red-50 text-accent-error
+                    {% elif project.status == 'under_review' %}bg-orange-50 text-accent-warning
+                    {% elif project.status == 'proposed' %}bg-purple-50 text-purple-600
+                    {% else %}bg-secondary-100 text-secondary{% endif %}">
+                    {{ project.status | replace('_', ' ') | title }}
+                </span>
+            </div>
+            <p class="text-sm text-secondary-500 leading-relaxed whitespace-pre-line">{{ project.description or 'No description provided.' }}</p>
+        </div>
+        {% if project.grade %}
+        <div class="flex-shrink-0 text-center px-5 py-3 rounded-xl bg-gold-50 border border-gold-200">
+            <p class="text-xs font-semibold text-gold-600 uppercase">Grade</p>
+            <p class="text-2xl font-bold text-gold-700">{{ project.grade }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Quick Status Update ── #}
+    {% if can_manage %}
+    <div class="mt-4 pt-4 border-t border-secondary-100">
+        <form method="post" action="/dashboard/projects/{{ project.id }}/status" class="flex items-center gap-3">
+            <label class="text-xs font-medium text-secondary-500">Update status:</label>
+            <select name="status" class="text-xs border border-secondary-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                {% for s in status_choices %}
+                <option value="{{ s }}" {{ 'selected' if s == project.status else '' }}>{{ s | replace('_', ' ') | title }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="text-xs font-medium px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-primary-700 cursor-pointer">Update</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-secondary-100 text-sm text-secondary-400">
+        {% if supervisor %}
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-gold-100 text-gold-600 flex items-center justify-center text-xs font-bold">
+                {{ supervisor.first_name[0] }}
+            </div>
+            <span>{{ supervisor.first_name }} {{ supervisor.last_name }}</span>
+            <span class="text-xs bg-gold-50 text-gold-600 px-2 py-0.5 rounded-full">Supervisor</span>
+        </div>
+        {% endif %}
+        <span><i class="fa-solid fa-calendar mr-1"></i> Created {{ project.created_at[:10] if project.created_at else 'N/A' }}</span>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {# ── Left: Milestones, Documents & Submissions ── #}
+    <div class="lg:col-span-2 space-y-6">
+        
+        {# ════ Milestones ════ #}
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-secondary-900">Milestones</h2>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-secondary-400">{{ milestones | length }} total</span>
+                    {% if can_manage %}
+                    <button onclick="document.getElementById('add-milestone-form').classList.toggle('hidden')" class="text-xs font-medium text-primary hover:text-primary-700 cursor-pointer">
+                        <i class="fa-solid fa-plus mr-1"></i> Add
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Add Milestone Form #}
+            {% if can_manage %}
+            <div id="add-milestone-form" class="hidden mb-4 p-4 bg-secondary-50 rounded-lg border border-secondary-200">
+                <form method="post" action="/dashboard/projects/{{ project.id }}/milestones/new" class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-secondary-600">Title *</label>
+                            <input type="text" name="title" required class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Milestone title">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-secondary-600">Due Date *</label>
+                            <input type="date" name="due_date" required class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-secondary-600">Description</label>
+                        <textarea name="description" rows="2" class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-y" placeholder="Optional description"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="document.getElementById('add-milestone-form').classList.add('hidden')" class="text-xs px-3 py-1.5 text-secondary-600 hover:bg-secondary-200 rounded-lg">Cancel</button>
+                        <button type="submit" class="text-xs px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-700 cursor-pointer">Create Milestone</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if milestones %}
+            <div class="space-y-3">
+                {% for m in milestones %}
+                <div class="p-3 rounded-lg border border-secondary-100 hover:border-secondary-200 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                            {% if m.status == 'completed' %}bg-emerald-50 text-accent-success
+                            {% elif m.status == 'in_progress' %}bg-primary-50 text-primary
+                            {% elif m.status == 'overdue' %}bg-red-50 text-accent-error
+                            {% else %}bg-secondary-100 text-secondary{% endif %}">
+                            {% if m.status == 'completed' %}
+                            <i class="fa-solid fa-check text-sm"></i>
+                            {% elif m.status == 'overdue' %}
+                            <i class="fa-solid fa-exclamation text-sm"></i>
+                            {% else %}
+                            <i class="fa-solid fa-circle-dot text-xs"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-secondary-900 truncate">{{ m.title }}</p>
+                            <p class="text-xs text-secondary-400">Due {{ m.due_date[:10] if m.due_date else 'N/A' }}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded-full
+                                {% if m.status == 'completed' %}bg-emerald-50 text-accent-success
+                                {% elif m.status == 'in_progress' %}bg-primary-50 text-primary
+                                {% elif m.status == 'overdue' %}bg-red-50 text-accent-error
+                                {% else %}bg-secondary-100 text-secondary{% endif %}">
+                                {{ m.status | replace('_', ' ') | title }}
+                            </span>
+                            {% if can_manage %}
+                            <button onclick="document.getElementById('edit-milestone-{{ m.id }}').classList.toggle('hidden')" class="text-secondary-400 hover:text-primary text-xs cursor-pointer" title="Edit">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <form method="post" action="/dashboard/projects/{{ project.id }}/milestones/{{ m.id }}/delete" class="inline" onsubmit="return confirm('Delete this milestone?')">
+                                <button type="submit" class="text-secondary-400 hover:text-accent-error text-xs cursor-pointer" title="Delete">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if m.description %}
+                    <p class="text-xs text-secondary-400 mt-2 ml-12">{{ m.description }}</p>
+                    {% endif %}
+
+                    {# Inline Edit Form #}
+                    {% if can_manage %}
+                    <div id="edit-milestone-{{ m.id }}" class="hidden mt-3 pt-3 border-t border-secondary-100">
+                        <form method="post" action="/dashboard/projects/{{ project.id }}/milestones/{{ m.id }}/edit" class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <input type="text" name="title" value="{{ m.title }}" class="text-sm border border-secondary-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Title">
+                                <input type="date" name="due_date" value="{{ m.due_date[:10] if m.due_date else '' }}" class="text-sm border border-secondary-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <select name="status" class="text-sm border border-secondary-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="pending" {{ 'selected' if m.status == 'pending' else '' }}>Pending</option>
+                                    <option value="in_progress" {{ 'selected' if m.status == 'in_progress' else '' }}>In Progress</option>
+                                    <option value="completed" {{ 'selected' if m.status == 'completed' else '' }}>Completed</option>
+                                    <option value="overdue" {{ 'selected' if m.status == 'overdue' else '' }}>Overdue</option>
+                                </select>
+                            </div>
+                            <textarea name="description" rows="2" class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary resize-y" placeholder="Description">{{ m.description or '' }}</textarea>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="document.getElementById('edit-milestone-{{ m.id }}').classList.add('hidden')" class="text-xs px-3 py-1.5 text-secondary-600 hover:bg-secondary-100 rounded-lg">Cancel</button>
+                                <button type="submit" class="text-xs px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-700 cursor-pointer">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-6">
+                <p class="text-sm text-secondary-400">No milestones defined yet</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {# ════ Documents ════ #}
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-secondary-900">Documents</h2>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-secondary-400">{{ documents | length }} file{{ 's' if documents | length != 1 else '' }}</span>
+                    {% if is_member or can_manage %}
+                    <button onclick="document.getElementById('upload-doc-form').classList.toggle('hidden')" class="text-xs font-medium text-primary hover:text-primary-700 cursor-pointer">
+                        <i class="fa-solid fa-upload mr-1"></i> Upload
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Upload Form #}
+            {% if is_member or can_manage %}
+            <div id="upload-doc-form" class="hidden mb-4 p-4 bg-secondary-50 rounded-lg border border-secondary-200">
+                <form method="post" action="/dashboard/projects/{{ project.id }}/documents/upload" enctype="multipart/form-data" class="space-y-3">
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-secondary-600">File *</label>
+                        <input type="file" name="file" required class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-secondary-600">Title</label>
+                            <input type="text" name="title" class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Optional title (defaults to filename)">
+                        </div>
+                        {% if milestones %}
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-secondary-600">Milestone</label>
+                            <select name="milestone_id" class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="">None</option>
+                                {% for m in milestones %}
+                                <option value="{{ m.id }}">{{ m.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-secondary-600">Description</label>
+                        <textarea name="description" rows="2" class="w-full text-sm border border-secondary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary resize-y" placeholder="Optional description"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="document.getElementById('upload-doc-form').classList.add('hidden')" class="text-xs px-3 py-1.5 text-secondary-600 hover:bg-secondary-200 rounded-lg">Cancel</button>
+                        <button type="submit" class="text-xs px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-700 cursor-pointer">Upload</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if documents %}
+            <div class="space-y-2">
+                {% for doc in documents %}
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-secondary-100 hover:border-primary-200 hover:bg-primary-50/20 transition-colors group">
+                    <a href="/dashboard/documents/{{ doc.id }}" class="w-8 h-8 rounded-lg bg-blue-50 text-accent-info flex items-center justify-center flex-shrink-0 group-hover:bg-primary-50 group-hover:text-primary transition-colors">
+                        {% if doc.file_type in ['pdf'] %}
+                        <i class="fa-solid fa-file-pdf text-sm"></i>
+                        {% elif doc.file_type in ['doc', 'docx'] %}
+                        <i class="fa-solid fa-file-word text-sm"></i>
+                        {% elif doc.file_type in ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'] %}
+                        <i class="fa-solid fa-file-image text-sm"></i>
+                        {% elif doc.file_type in ['zip', 'rar', '7z'] %}
+                        <i class="fa-solid fa-file-zipper text-sm"></i>
+                        {% elif doc.file_type in ['py', 'js', 'ts', 'java', 'cpp', 'c', 'html', 'css'] %}
+                        <i class="fa-solid fa-file-code text-sm"></i>
+                        {% else %}
+                        <i class="fa-solid fa-file text-sm"></i>
+                        {% endif %}
+                    </a>
+                    <a href="/dashboard/documents/{{ doc.id }}" class="flex-1 min-w-0 no-underline">
+                        <p class="text-sm font-medium text-secondary-900 truncate group-hover:text-primary transition-colors">{{ doc.title or doc.file_name }}</p>
+                        <p class="text-xs text-secondary-400">
+                            {{ (doc.file_type or 'file') | upper }}
+                            {% if doc.file_size %} &middot; {{ (doc.file_size / 1024) | round(1) }}KB{% endif %}
+                            &middot; v{{ doc.version or 1 }}
+                            &middot; {{ doc.created_at[:10] if doc.created_at else '' }}
+                        </p>
+                    </a>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <a href="/dashboard/documents/{{ doc.id }}" class="text-xs text-primary hover:text-primary-700" title="View">
+                            <i class="fa-solid fa-eye"></i>
+                        </a>
+                        {% if can_manage %}
+                        <form method="post" action="/dashboard/projects/{{ project.id }}/documents/{{ doc.id }}/delete" class="inline" onsubmit="return confirm('Delete this document?')">
+                            <button type="submit" class="text-xs text-secondary-400 hover:text-accent-error cursor-pointer" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-6">
+                <p class="text-sm text-secondary-400">No documents uploaded yet</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {# ════ Submissions ════ #}
+        <div class="card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-secondary-900">Recent Submissions</h2>
+                <span class="text-xs text-secondary-400">{{ submissions | length }} shown</span>
+            </div>
+
+            {% if submissions %}
+            <div class="space-y-3">
+                {% for s in submissions %}
+                <a href="/dashboard/submissions/{{ s.id }}" class="flex items-center gap-4 p-3 rounded-lg border border-secondary-100 hover:border-primary-200 transition-colors no-underline group">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                        {% if s.status == 'approved' %}bg-emerald-50 text-accent-success
+                        {% elif s.status == 'submitted' %}bg-primary-50 text-primary
+                        {% elif s.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                        {% elif s.status == 'rejected' %}bg-red-50 text-accent-error
+                        {% else %}bg-secondary-100 text-secondary{% endif %}">
+                        <i class="fa-solid fa-file-lines text-sm"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-secondary-900 truncate group-hover:text-primary">{{ s.title }}</p>
+                        <p class="text-xs text-secondary-400">{{ s.created_at[:10] if s.created_at else '' }}</p>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full
+                        {% if s.status == 'approved' %}bg-emerald-50 text-accent-success
+                        {% elif s.status == 'submitted' %}bg-primary-50 text-primary
+                        {% elif s.status == 'revision_required' %}bg-orange-50 text-accent-warning
+                        {% elif s.status == 'rejected' %}bg-red-50 text-accent-error
+                        {% else %}bg-secondary-100 text-secondary{% endif %}">
+                        {{ s.status | replace('_', ' ') | title }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-6">
+                <p class="text-sm text-secondary-400">No submissions yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Right: Members ── #}
+    <div class="space-y-6">
+
+        {# ── Invite Link Card (owner only) ── #}
+        {% if is_owner %}
+        <div class="card">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-base font-semibold text-secondary-900">Invite Members</h2>
+            </div>
+            <p class="text-xs text-secondary-400 mb-3">Share this link with students to add them to your project.</p>
+            
+            <div class="flex items-center gap-2">
+                <input
+                    id="invite-link"
+                    type="text"
+                    readonly
+                    value="{{ invite_url }}"
+                    class="flex-1 text-xs bg-secondary-50 border border-secondary-200 rounded-lg px-3 py-2 text-secondary-600 truncate focus:outline-none cursor-text"
+                />
+                <button
+                    onclick="copyInviteLink()"
+                    id="copy-btn"
+                    type="button"
+                    class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary-700 transition-colors"
+                >
+                    <i class="fa-solid fa-copy" id="copy-icon"></i>
+                    <span id="copy-text">Copy</span>
+                </button>
+            </div>
+
+            <form method="POST" action="/dashboard/projects/{{ project.id }}/regenerate-invite" class="mt-3">
+                <button type="submit" class="text-xs text-secondary-400 hover:text-primary transition-colors">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Generate new link
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-4">Team Members</h2>
+
+            {% if members %}
+            <div class="space-y-3">
+                {% for m in members %}
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-secondary-50 transition-colors">
+                    <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        {{ m.user.first_name[0] }}{{ m.user.last_name[0] }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-secondary-900 truncate">{{ m.user.first_name }} {{ m.user.last_name }}</p>
+                        <p class="text-xs text-secondary-400">{{ m.user.email }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full
+                            {% if m.member.role == 'owner' %}bg-gold-50 text-gold-600{% else %}bg-secondary-100 text-secondary{% endif %}">
+                            {{ m.member.role | title }}
+                        </span>
+                        {% if is_owner and m.member.role != 'owner' %}
+                        <form method="post" action="/dashboard/projects/{{ project.id }}/members/{{ m.user.id }}/remove" class="inline" onsubmit="return confirm('Remove this member from the project?')">
+                            <button type="submit" class="text-secondary-400 hover:text-accent-error cursor-pointer" title="Remove member">
+                                <i class="fa-solid fa-user-minus text-xs"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <p class="text-sm text-secondary-400">No team members</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if supervisor %}
+        <div class="card">
+            <h2 class="text-base font-semibold text-secondary-900 mb-4">Supervisor</h2>
+            <div class="flex items-center gap-3 p-2">
+                <div class="w-9 h-9 rounded-full bg-gold text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    {{ supervisor.first_name[0] }}{{ supervisor.last_name[0] }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-secondary-900">{{ supervisor.first_name }} {{ supervisor.last_name }}</p>
+                    <p class="text-xs text-secondary-400">{{ supervisor.email }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyInviteLink() {
+    const input = document.getElementById('invite-link');
+    const icon = document.getElementById('copy-icon');
+    const text = document.getElementById('copy-text');
+    const btn = document.getElementById('copy-btn');
+
+    navigator.clipboard.writeText(input.value).then(() => {
+        icon.className = 'fa-solid fa-check';
+        text.textContent = 'Copied!';
+        btn.classList.remove('bg-primary', 'hover:bg-primary-700');
+        btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+
+        setTimeout(() => {
+            icon.className = 'fa-solid fa-copy';
+            text.textContent = 'Copy';
+            btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+            btn.classList.add('bg-primary', 'hover:bg-primary-700');
+        }, 2000);
+    });
+}
+</script>
+
+{% endblock %}

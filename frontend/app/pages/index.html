@@ -1,0 +1,430 @@
+{% extends "pages/layout.html" %}
+
+{% block content %}
+
+{% include "components/navbar.html" %}
+
+<!-- ─── Hero Section ──────────────────────────────────────────── -->
+<section class="relative min-h-screen flex items-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 overflow-hidden">
+    <!-- Background decorations -->
+    <div class="absolute inset-0">
+        <div class="absolute top-20 left-10 w-72 h-72 bg-gold/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-primary-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold/5 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative max-w-7xl mx-auto px-6 md:px-[80px] py-32 md:py-40 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <!-- Left: Content -->
+            <div class="animate-fade-in-up">
+                <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-6 border border-white/20">
+                    <span class="w-2 h-2 bg-gold rounded-full animate-pulse"></span>
+                    <span class="text-white/90 text-sm font-medium">Final Year Project Management</span>
+                </div>
+                
+                <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+                    Streamline Your
+                    <span class="text-gold-300"> Project</span>
+                    <br>Supervision
+                </h1>
+                
+                <p class="text-lg text-primary-200 mb-8 max-w-xl leading-relaxed">
+                    A centralized platform for students, supervisors, and administrators to manage proposals, track milestones, exchange feedback, and ensure timely project completion.
+                </p>
+                
+                <div class="flex flex-wrap gap-4 mb-12">
+                    <a href="/auth/student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg hover:shadow-xl">
+                        <i class="fa-solid fa-rocket mr-2"></i> Get Started
+                    </a>
+                    <a href="#features" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
+                        <i class="fa-solid fa-play mr-2"></i> Learn More
+                    </a>
+                </div>
+
+                <!-- Quick stats -->
+                <div class="flex flex-wrap gap-8">
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-white counter" data-target="500">0</div>
+                        <div class="text-primary-300 text-sm">Projects Managed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-white counter" data-target="120">0</div>
+                        <div class="text-primary-300 text-sm">Supervisors</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-white counter" data-target="98">0</div>
+                        <div class="text-primary-300 text-sm">% Satisfaction</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Floating illustration cards -->
+            <div class="hidden lg:flex justify-center relative">
+                <div class="relative w-full max-w-md">
+                    <!-- Main card -->
+                    <div class="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 shadow-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-gold/20 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-gold-300"></i>
+                            </div>
+                            <div>
+                                <div class="text-white font-semibold text-sm">Project Progress</div>
+                                <div class="text-primary-300 text-xs">Updated 2 mins ago</div>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-primary-200">Literature Review</span>
+                                    <span class="text-gold-300 font-medium">100%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full"><div class="h-2 bg-gold-400 rounded-full w-full"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-primary-200">Implementation</span>
+                                    <span class="text-gold-300 font-medium">75%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full"><div class="h-2 bg-primary-400 rounded-full" style="width:75%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-primary-200">Testing</span>
+                                    <span class="text-gold-300 font-medium">30%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full"><div class="h-2 bg-primary-300 rounded-full" style="width:30%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating notification card -->
+                    <div class="absolute -top-4 -right-4 bg-white rounded-xl shadow-xl p-4 animate-float border border-secondary-100" style="animation-delay: 0.5s">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-accent-success/10 rounded-full flex items-center justify-center">
+                                <i class="fa-solid fa-check text-accent-success text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary-900 font-medium text-xs">Proposal Approved</div>
+                                <div class="text-secondary-400 text-xs">by Dr. Johnson</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating message card -->
+                    <div class="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-xl p-4 animate-float border border-secondary-100" style="animation-delay: 1s">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                                <i class="fa-solid fa-comment text-primary text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="text-secondary-900 font-medium text-xs">New Feedback</div>
+                                <div class="text-secondary-400 text-xs">3 new comments</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wave separator -->
+    <div class="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 50L48 45C96 40 192 30 288 33C384 36 480 52 576 58C672 64 768 60 864 52C960 44 1056 32 1152 30C1248 28 1344 36 1392 40L1440 44V100H0V50Z" fill="white"/>
+        </svg>
+    </div>
+</section>
+
+
+<!-- ─── Features Section ──────────────────────────────────────── -->
+<section id="features" class="py-20 md:py-28 bg-white">
+    <div class="max-w-7xl mx-auto px-6 md:px-[80px]">
+        <div class="text-center mb-16 reveal">
+            <span class="inline-block bg-primary-50 text-primary font-semibold text-sm px-4 py-1.5 rounded-full mb-4">Features</span>
+            <h2 class="section-title mb-4">Everything You Need</h2>
+            <p class="section-subtitle">Powerful tools designed to make project supervision seamless and efficient for everyone involved.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Feature 1 -->
+            <div class="card group hover:border-primary-200 hover:-translate-y-1 reveal">
+                <div class="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white">
+                    <i class="fa-solid fa-comments text-primary group-hover:text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-secondary-900 mb-2">Real-time Messaging</h3>
+                <p class="text-secondary text-sm leading-relaxed">Direct communication between students and supervisors. No more lost emails or delayed responses.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="card group hover:border-gold-200 hover:-translate-y-1 reveal">
+                <div class="w-12 h-12 bg-gold-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-gold group-hover:text-white">
+                    <i class="fa-solid fa-cloud-arrow-up text-gold-600 group-hover:text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-secondary-900 mb-2">Document Management</h3>
+                <p class="text-secondary text-sm leading-relaxed">Upload, version, and organize project documents with complete history tracking and easy retrieval.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="card group hover:border-accent-success-400 hover:-translate-y-1 reveal">
+                <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-accent-success group-hover:text-white">
+                    <i class="fa-solid fa-list-check text-accent-success group-hover:text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-secondary-900 mb-2">Task & Milestone Tracking</h3>
+                <p class="text-secondary text-sm leading-relaxed">Set deadlines, track progress through milestones, and stay accountable with visual progress indicators.</p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="card group hover:border-purple-300 hover:-translate-y-1 reveal">
+                <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-500 group-hover:text-white">
+                    <i class="fa-solid fa-star-half-stroke text-purple-500 group-hover:text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-secondary-900 mb-2">Feedback & Grading</h3>
+                <p class="text-secondary text-sm leading-relaxed">Supervisors can review submissions, provide detailed feedback, and assign grades all in one place.</p>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="card group hover:border-primary-200 hover:-translate-y-1 reveal">
+                <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white">
+                    <i class="fa-solid fa-chart-pie text-primary group-hover:text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-secondary-900 mb-2">Admin Dashboard</h3>
+                <p class="text-secondary text-sm leading-relaxed">Comprehensive overview of all projects, supervisors, and students for administrative monitoring and reporting.</p>
+            </div>
+
+            <!-- Feature 6 -->
+            <div class="card group hover:border-gold-200 hover:-translate-y-1 reveal">
+                <div class="w-12 h-12 bg-gold-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-gold group-hover:text-white">
+                    <i class="fa-solid fa-bell text-gold-600 group-hover:text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-secondary-900 mb-2">Smart Notifications</h3>
+                <p class="text-secondary text-sm leading-relaxed">Stay informed with timely alerts for deadlines, new submissions, feedback, and important project updates.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ─── How It Works Section ──────────────────────────────────── -->
+<section id="how-it-works" class="py-20 md:py-28 bg-secondary-50">
+    <div class="max-w-7xl mx-auto px-6 md:px-[80px]">
+        <div class="text-center mb-16 reveal">
+            <span class="inline-block bg-gold-50 text-gold-700 font-semibold text-sm px-4 py-1.5 rounded-full mb-4">How It Works</span>
+            <h2 class="section-title mb-4">Simple Steps to Get Started</h2>
+            <p class="section-subtitle">Our platform is designed to be intuitive. Here's how you can get up and running in minutes.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Step 1 -->
+            <div class="text-center reveal">
+                <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/30">
+                    <span class="text-2xl font-bold text-white">1</span>
+                </div>
+                <h3 class="text-xl font-bold text-secondary-900 mb-3">Create Your Account</h3>
+                <p class="text-secondary text-sm leading-relaxed">Sign up as a student, supervisor, or admin. Each role gets a tailored dashboard and specific tools.</p>
+            </div>
+
+            <!-- Connector -->
+            <div class="hidden md:flex items-start justify-center pt-8">
+                <div class="w-full h-px bg-gradient-to-r from-primary via-gold to-accent-success mt-8 relative">
+                    <div class="absolute left-1/2 -translate-x-1/2 -top-2 w-4 h-4 bg-gold rounded-full border-4 border-gold-100"></div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="text-center reveal">
+                <div class="w-16 h-16 bg-gold rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-gold/30">
+                    <span class="text-2xl font-bold text-white">2</span>
+                </div>
+                <h3 class="text-xl font-bold text-secondary-900 mb-3">Submit & Collaborate</h3>
+                <p class="text-secondary text-sm leading-relaxed">Upload proposals, share documents, and communicate directly with your supervisors or students.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+            <div></div>
+            <!-- Step 3 -->
+            <div class="text-center reveal">
+                <div class="w-16 h-16 bg-accent-success rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-accent-success/30">
+                    <span class="text-2xl font-bold text-white">3</span>
+                </div>
+                <h3 class="text-xl font-bold text-secondary-900 mb-3">Track & Complete</h3>
+                <p class="text-secondary text-sm leading-relaxed">Monitor your progress through milestones, receive feedback, and graduate with a well-documented project.</p>
+            </div>
+            <div></div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ─── Stats Section ─────────────────────────────────────────── -->
+<section id="stats" class="py-20 bg-gradient-to-r from-primary-800 via-primary-700 to-primary-900 relative overflow-hidden">
+    <div class="absolute inset-0">
+        <div class="absolute top-0 left-1/4 w-64 h-64 bg-gold/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-primary-400/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 md:px-[80px] relative">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="text-center reveal">
+                <div class="text-4xl md:text-5xl font-bold text-white mb-2 counter" data-target="500">0</div>
+                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Projects</div>
+            </div>
+            <div class="text-center reveal">
+                <div class="text-4xl md:text-5xl font-bold text-gold-300 mb-2 counter" data-target="1200">0</div>
+                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Students</div>
+            </div>
+            <div class="text-center reveal">
+                <div class="text-4xl md:text-5xl font-bold text-white mb-2 counter" data-target="120">0</div>
+                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Supervisors</div>
+            </div>
+            <div class="text-center reveal">
+                <div class="text-4xl md:text-5xl font-bold text-gold-300 mb-2 counter" data-target="15">0</div>
+                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Departments</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ─── Role Cards Section ────────────────────────────────────── -->
+<section class="py-20 md:py-28 bg-white">
+    <div class="max-w-7xl mx-auto px-6 md:px-[80px]">
+        <div class="text-center mb-16 reveal">
+            <span class="inline-block bg-primary-50 text-primary font-semibold text-sm px-4 py-1.5 rounded-full mb-4">For Everyone</span>
+            <h2 class="section-title mb-4">Choose Your Portal</h2>
+            <p class="section-subtitle">Each role gets a dedicated experience designed for their specific needs.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Student Card -->
+            <div class="group relative bg-gradient-to-br from-primary-50 to-white rounded-2xl border border-primary-200 p-8 hover:shadow-xl hover:-translate-y-2 reveal">
+                <div class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fa-solid fa-graduation-cap text-2xl text-primary"></i>
+                </div>
+                <h3 class="text-xl font-bold text-secondary-900 mb-3">Students</h3>
+                <ul class="space-y-2 mb-8">
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> Submit proposals and documents</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> Track project milestones</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> Chat with supervisors</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> View feedback and grades</li>
+                </ul>
+                <a href="/auth/student" class="btn btn-primary w-full text-center">
+                    Student Portal <i class="fa-solid fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+
+            <!-- Supervisor Card -->
+            <div class="group relative bg-gradient-to-br from-gold-50 to-white rounded-2xl border border-gold-200 p-8 hover:shadow-xl hover:-translate-y-2 reveal">
+                <div class="absolute -top-3 right-6 bg-gold text-white text-xs font-bold px-3 py-1 rounded-full">Popular</div>
+                <div class="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fa-solid fa-chalkboard-teacher text-2xl text-gold-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-secondary-900 mb-3">Supervisors</h3>
+                <ul class="space-y-2 mb-8">
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Monitor project stages</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Review and comment on submissions</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Assign tasks and deadlines</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Grade student progress</li>
+                </ul>
+                <a href="/auth/supervisor" class="btn btn-gold w-full text-center">
+                    Supervisor Portal <i class="fa-solid fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+
+            <!-- Admin Card -->
+            <div class="group relative bg-gradient-to-br from-secondary-50 to-white rounded-2xl border border-secondary-300 p-8 hover:shadow-xl hover:-translate-y-2 reveal">
+                <div class="w-14 h-14 bg-secondary-100 rounded-2xl flex items-center justify-center mb-6">
+                    <i class="fa-solid fa-shield-halved text-2xl text-secondary-700"></i>
+                </div>
+                <h3 class="text-xl font-bold text-secondary-900 mb-3">Administrators</h3>
+                <ul class="space-y-2 mb-8">
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Full project oversight</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Manage users and roles</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Department management</li>
+                    <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Generate reports</li>
+                </ul>
+                <a href="/auth/admin" class="btn bg-secondary-800 text-white hover:bg-secondary-900 w-full text-center">
+                    Admin Portal <i class="fa-solid fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ─── CTA Section ───────────────────────────────────────────── -->
+<section class="py-20 bg-secondary-50">
+    <div class="max-w-4xl mx-auto px-6 text-center reveal">
+        <div class="bg-gradient-to-br from-primary-700 to-primary-900 rounded-3xl p-12 md:p-16 relative overflow-hidden shadow-2xl">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -translate-y-1/4 translate-x-1/4"></div>
+            <div class="relative">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
+                <p class="text-primary-200 text-lg mb-8 max-w-xl mx-auto">Join hundreds of students and supervisors already using ProjectHub to streamline their final year projects.</p>
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <a href="/auth/student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg">
+                        <i class="fa-solid fa-graduation-cap mr-2"></i> I'm a Student
+                    </a>
+                    <a href="/auth/supervisor" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
+                        <i class="fa-solid fa-chalkboard-teacher mr-2"></i> I'm a Supervisor
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% include "components/footer.html" %}
+
+<!-- Counter animation script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const counters = document.querySelectorAll('.counter');
+    const speed = 50;
+
+    const animateCounter = (counter) => {
+        const target = +counter.getAttribute('data-target');
+        let current = 0;
+        const increment = target / speed;
+        
+        const updateCount = () => {
+            current += increment;
+            if (current < target) {
+                counter.innerText = Math.ceil(current).toLocaleString();
+                requestAnimationFrame(updateCount);
+            } else {
+                counter.innerText = target.toLocaleString();
+                // Add + suffix for large numbers
+                if (target >= 100) {
+                    counter.innerText = target.toLocaleString() + '+';
+                }
+            }
+        };
+        updateCount();
+    };
+
+    // Use IntersectionObserver to trigger counter animation when in view
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
+                entry.target.classList.add('counted');
+                animateCounter(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    counters.forEach(counter => counterObserver.observe(counter));
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}
