@@ -13,3 +13,7 @@ pip install -r requirements.txt
 
 echo "Running database migrations..."
 alembic upgrade head
+
+echo "Seeding data"
+python3 scripts/seeders/seed_departments.py
+python3 scripts/seeders/seed_users.py
