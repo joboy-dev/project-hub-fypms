@@ -8,6 +8,8 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "$PROJECT_DIR"
 
+mkdir -p alembic/versions
+
 echo "Installing dependencies..."
 pip install -r requirements.txt
 
