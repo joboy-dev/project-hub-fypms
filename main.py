@@ -23,6 +23,7 @@ from api.db.database import create_database
 from api.utils.loggers import create_logger
 from api.utils.log_streamer import log_streamer
 from api.utils.port_checker import find_free_port
+from api.utils.responses import success_response
 from api.v1.routes import v1_router
 from api.utils.settings import settings
 
@@ -103,6 +104,13 @@ async def log_requests(request: Request, call_next):
 
 # Load the router
 app.include_router(v1_router)
+
+@app.head("/", tags=["Home"])
+async def root(request: Request) -> dict:
+    return success_response(
+        message="Welcome to API", 
+        status_code=200
+    )
 
 @app.get("/logs", tags=["Home"])
 async def stream_logs(
