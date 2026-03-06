@@ -1,0 +1,135 @@
+{% extends "pages/dashboard/layout.html" %}
+
+{% block dashboard_content %}
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div>
+        <h2 class="text-xl font-bold text-secondary-900">Notifications</h2>
+        <p class="text-sm text-secondary-400 mt-0.5">{{ unread_count }} unread</p>
+    </div>
+    <div class="flex items-center gap-3">
+        {% if unread_count > 0 %}
+        <form action="/dashboard/notifications/read-all" method="post">
+            <button type="submit" class="btn text-sm bg-primary-50 text-primary border border-primary-200 hover:bg-primary hover:text-white cursor-pointer">
+                <i class="fa-solid fa-check-double mr-1.5"></i> Mark All Read
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-4 mb-6">
+    <form method="get" action="/dashboard/notifications" class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-secondary-600">Status:</label>
+            <select name="read" onchange="this.form.submit()" class="text-sm border border-secondary-200 rounded-lg px-3 py-1.5 bg-white text-secondary-700 focus:outline-none focus:border-primary">
+                <option value="all" {{ 'selected' if read_filter == 'all' else '' }}>All</option>
+                <option value="unread" {{ 'selected' if read_filter == 'unread' else '' }}>Unread</option>
+                <option value="read" {{ 'selected' if read_filter == 'read' else '' }}>Read</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-secondary-600">Type:</label>
+            <select name="type" onchange="this.form.submit()" class="text-sm border border-secondary-200 rounded-lg px-3 py-1.5 bg-white text-secondary-700 focus:outline-none focus:border-primary">
+                <option value="all" {{ 'selected' if type_filter == 'all' else '' }}>All Types</option>
+                <option value="project_update" {{ 'selected' if type_filter == 'project_update' else '' }}>Project</option>
+                <option value="submission" {{ 'selected' if type_filter == 'submission' else '' }}>Submission</option>
+                <option value="feedback" {{ 'selected' if type_filter == 'feedback' else '' }}>Feedback</option>
+                <option value="milestone" {{ 'selected' if type_filter == 'milestone' else '' }}>Milestone</option>
+                <option value="message" {{ 'selected' if type_filter == 'message' else '' }}>Message</option>
+                <option value="system" {{ 'selected' if type_filter == 'system' else '' }}>System</option>
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Notification type icon/color map -->
+{% set type_icons = {
+    'submission': {'icon': 'fa-file-arrow-up', 'bg': 'bg-primary-50', 'text': 'text-primary', 'ring': 'ring-primary-200'},
+    'feedback': {'icon': 'fa-comment-dots', 'bg': 'bg-gold-50', 'text': 'text-gold-700', 'ring': 'ring-gold-200'},
+    'message': {'icon': 'fa-envelope', 'bg': 'bg-green-50', 'text': 'text-green-600', 'ring': 'ring-green-200'},
+    'milestone': {'icon': 'fa-flag-checkered', 'bg': 'bg-purple-50', 'text': 'text-purple-600', 'ring': 'ring-purple-200'},
+    'project_update': {'icon': 'fa-folder-open', 'bg': 'bg-primary-50', 'text': 'text-primary-700', 'ring': 'ring-primary-200'},
+    'system': {'icon': 'fa-bell', 'bg': 'bg-secondary-100', 'text': 'text-secondary-600', 'ring': 'ring-secondary-200'},
+} %}
+
+<!-- Notifications list -->
+{% if notifications %}
+<div class="card p-0 overflow-hidden divide-y divide-secondary-100">
+    {% for n in notifications %}
+    {% set meta = type_icons.get(n.type, type_icons.system) %}
+    <div class="flex items-start gap-4 px-5 py-4 {{ 'bg-white' if n.is_read else 'bg-primary-50/30' }} hover:bg-secondary-50 transition-colors">
+        <!-- Icon -->
+        <div class="flex-shrink-0 mt-0.5">
+            <div class="w-10 h-10 rounded-full {{ meta.bg }} {{ meta.text }} ring-1 {{ meta.ring }} flex items-center justify-center">
+                <i class="fa-solid {{ meta.icon }} text-sm"></i>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                    <h3 class="text-sm font-semibold {{ 'text-secondary-900' if not n.is_read else 'text-secondary-600' }} truncate">
+                        {{ n.title or 'Notification' }}
+                    </h3>
+                    <p class="text-sm {{ 'text-secondary-700' if not n.is_read else 'text-secondary-400' }} mt-0.5 line-clamp-2">
+                        {{ n.content }}
+                    </p>
+                    <div class="flex items-center gap-3 mt-2">
+                        <span class="text-xs text-secondary-400">
+                            <i class="fa-regular fa-clock mr-1"></i>
+                            {{ n.created_at[:16].replace('T', ' ') if n.created_at else '' }}
+                        </span>
+                        {% if not n.is_read %}
+                        <span class="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary-50 px-2 py-0.5 rounded-full">
+                            <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> New
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    {% if n.link %}
+                    <form action="/dashboard/notifications/{{ n.id }}/read" method="get">
+                        <button type="submit" class="btn text-xs bg-primary-50 text-primary border border-primary-200 hover:bg-primary hover:text-white px-3 py-1.5 cursor-pointer" title="View">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </form>
+                    {% elif not n.is_read %}
+                    <form action="/dashboard/notifications/{{ n.id }}/read" method="get">
+                        <button type="submit" class="btn text-xs bg-secondary-50 text-secondary-600 border border-secondary-200 hover:bg-secondary-100 px-3 py-1.5 cursor-pointer" title="Mark as read">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Unread indicator -->
+        {% if not n.is_read %}
+        <div class="w-2.5 h-2.5 rounded-full bg-primary flex-shrink-0 mt-2"></div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% include "components/paginator.html" %}
+
+
+{% else %}
+<div class="card text-center py-16">
+    <div class="w-16 h-16 rounded-full bg-secondary-100 flex items-center justify-center mx-auto mb-4">
+        <i class="fa-solid fa-bell-slash text-2xl text-secondary-400"></i>
+    </div>
+    <h3 class="text-lg font-semibold text-secondary-900 mb-1">No notifications</h3>
+    <p class="text-sm text-secondary-400">You're all caught up! Notifications will appear here when there's activity on your projects.</p>
+</div>
+{% endif %}
+
+{% endblock %}

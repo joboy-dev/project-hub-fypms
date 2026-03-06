@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,9 @@ from api.v1.models.user import User, UserRole
 from api.v1.models.department import Department
 from api.v1.models.project import Project
 from api.v1.models.project_member import ProjectMember
+from api.v1.models.notification import NotificationType
 from api.v1.services.user import UserService
+from api.v1.services.notification import NotificationService
 from api.v1.routes.dashboard.helpers import _get_user, _paginate
 
 
@@ -119,11 +121,12 @@ async def user_edit_page(request: Request, user_id: str, db: Session = Depends(g
 
 
 @users_router.post('/{user_id}/edit')
-async def user_edit(request: Request, user_id: str, db: Session = Depends(get_db)):
+async def user_edit(request: Request, user_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     current_user = _get_user(request)
     try:
         UserService.check_user_role(db, current_user.id, [UserRole.ADMIN.value])
 
+        target_user = User.fetch_by_id(db, user_id)
         payload = await request.form()
         update_data = {}
 
@@ -145,7 +148,31 @@ async def user_edit(request: Request, user_id: str, db: Session = Depends(get_db
         is_active = payload.get('is_active')
         update_data['is_active'] = is_active == 'on' or is_active == 'true'
 
+        # Check what changed for notifications
+        role_changed = role and role != target_user.role
+        active_changed = update_data['is_active'] != target_user.is_active
+
         User.update(db, user_id, **update_data)
+
+        # Notify user about account changes
+        if role_changed:
+            NotificationService.notify(
+                db=db, bg_tasks=bg_tasks, user_id=user_id,
+                title="Account Role Updated",
+                content=f"Your account role has been changed to {role.title()} by an administrator.",
+                notification_type=NotificationType.SYSTEM.value,
+                link="/dashboard/settings",
+            )
+        if active_changed:
+            status_word = "activated" if update_data['is_active'] else "deactivated"
+            NotificationService.notify(
+                db=db, bg_tasks=bg_tasks, user_id=user_id,
+                title=f"Account {status_word.title()}",
+                content=f"Your account has been {status_word} by an administrator.",
+                notification_type=NotificationType.SYSTEM.value,
+                link="/dashboard",
+            )
+
         flash(request, 'User updated successfully', MessageCategory.SUCCESS)
         return RedirectResponse(url=f"/dashboard/users/{user_id}", status_code=303)
     except HTTPException as e:
@@ -156,13 +183,23 @@ async def user_edit(request: Request, user_id: str, db: Session = Depends(get_db
 # ─── Toggle Active ────────────────────────────────────
 
 @users_router.post('/{user_id}/toggle-active')
-async def user_toggle_active(request: Request, user_id: str, db: Session = Depends(get_db)):
+async def user_toggle_active(request: Request, user_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     current_user = _get_user(request)
     try:
         UserService.check_user_role(db, current_user.id, [UserRole.ADMIN.value])
         target_user = User.fetch_by_id(db, user_id)
         User.update(db, user_id, is_active=not target_user.is_active)
         status = "activated" if not target_user.is_active else "deactivated"
+
+        # Notify the user about account status change
+        NotificationService.notify(
+            db=db, bg_tasks=bg_tasks, user_id=user_id,
+            title=f"Account {status.title()}",
+            content=f"Your account has been {status} by an administrator.",
+            notification_type=NotificationType.SYSTEM.value,
+            link="/dashboard",
+        )
+
         flash(request, f'User {status} successfully', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)

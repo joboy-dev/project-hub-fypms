@@ -16,6 +16,7 @@ class NotificationType(enum.Enum):
 class Notification(BaseTableModel):
     __tablename__ = 'notifications'
     
+    title = sa.Column(sa.String(255), nullable=True)
     content = sa.Column(sa.Text, nullable=False)
     type = sa.Column(sa.String, default=NotificationType.SYSTEM.value, index=True)
     user_id = sa.Column(sa.String, sa.ForeignKey('users.id'), nullable=False, index=True)

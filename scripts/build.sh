@@ -11,6 +11,9 @@ cd "$PROJECT_DIR"
 echo "Installing dependencies..."
 pip install -r requirements.txt
 
+echo "Auto generate alembic migration scripts..."
+alembic revision --autogenerate -m "Auto generated migration"
+
 echo "Running database migrations..."
 alembic upgrade head
 

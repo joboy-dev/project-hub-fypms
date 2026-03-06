@@ -23,15 +23,42 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <!-- Notifications bell -->
-                <button class="relative w-9 h-9 rounded-lg flex items-center justify-center text-secondary-500 hover:bg-secondary-100 hover:text-secondary-700 cursor-pointer">
-                    <i class="fa-solid fa-bell"></i>
-                    {% if unread_notifications_count is defined and unread_notifications_count > 0 %}
-                    <span class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent-error text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {{ unread_notifications_count if unread_notifications_count < 10 else '9+' }}
-                    </span>
-                    {% endif %}
-                </button>
+                <!-- Notifications bell with dropdown -->
+                <div class="relative" id="notification-bell-wrapper">
+                    <button onclick="toggleNotificationDropdown()" class="relative w-9 h-9 rounded-lg flex items-center justify-center text-secondary-500 hover:bg-secondary-100 hover:text-secondary-700 cursor-pointer">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notification-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent-error text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">
+                            0
+                        </span>
+                    </button>
+
+                    <!-- Dropdown -->
+                    <div id="notification-dropdown" class="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-xl border border-secondary-200 shadow-xl z-50 hidden overflow-hidden">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-secondary-100 bg-secondary-50/50">
+                            <h3 class="text-sm font-semibold text-secondary-900">Notifications</h3>
+                            <form action="/dashboard/notifications/read-all" method="post" id="mark-all-read-form" class="hidden">
+                                <button type="submit" class="text-xs text-primary hover:text-primary-700 font-medium cursor-pointer">
+                                    Mark all read
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Notification items -->
+                        <div id="notification-items" class="max-h-80 overflow-y-auto divide-y divide-secondary-100">
+                            <div class="px-4 py-6 text-center">
+                                <p class="text-sm text-secondary-400">Loading...</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="px-4 py-2.5 border-t border-secondary-100 bg-secondary-50/50">
+                            <a href="/dashboard/notifications" class="text-sm font-medium text-primary hover:text-primary-700 flex items-center justify-center gap-1.5">
+                                View all notifications <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <!-- Profile -->
                 {% if request.state.current_user %}
                 <div class="hidden sm:flex items-center gap-2 pl-3 border-l border-secondary-200">
@@ -50,6 +77,137 @@
         </main>
     </div>
 </div>
+
+<script>
+// ─── Notification Dropdown ───────────────────────────
+const typeIcons = {
+    submission: { icon: 'fa-file-arrow-up', bg: '#eff6ff', color: '#2563eb' },
+    feedback: { icon: 'fa-comment-dots', bg: '#fffbeb', color: '#b45309' },
+    message: { icon: 'fa-envelope', bg: '#f0fdf4', color: '#15803d' },
+    milestone: { icon: 'fa-flag-checkered', bg: '#faf5ff', color: '#7c3aed' },
+    project_update: { icon: 'fa-folder-open', bg: '#eff6ff', color: '#1d4ed8' },
+    system: { icon: 'fa-bell', bg: '#f1f5f9', color: '#475569' },
+};
+
+let dropdownOpen = false;
+
+function toggleNotificationDropdown() {
+    const dropdown = document.getElementById('notification-dropdown');
+    dropdownOpen = !dropdownOpen;
+    dropdown.classList.toggle('hidden', !dropdownOpen);
+    if (dropdownOpen) fetchNotifications();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('notification-bell-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        const dropdown = document.getElementById('notification-dropdown');
+        dropdown.classList.add('hidden');
+        dropdownOpen = false;
+    }
+});
+
+function formatTimeAgo(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return date.toLocaleDateString();
+}
+
+async function fetchNotifications() {
+    try {
+        const res = await fetch('/dashboard/notifications/recent');
+        const data = await res.json();
+        renderDropdownNotifications(data.notifications, data.unread_count);
+        updateBadge(data.unread_count);
+    } catch (e) {
+        console.error('Failed to fetch notifications:', e);
+    }
+}
+
+function updateBadge(count) {
+    const badge = document.getElementById('notification-badge');
+    if (count > 0) {
+        badge.textContent = count < 10 ? count : '9+';
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+    // Show/hide mark all read form
+    const markAllForm = document.getElementById('mark-all-read-form');
+    if (markAllForm) markAllForm.classList.toggle('hidden', count === 0);
+}
+
+function renderDropdownNotifications(notifications, unreadCount) {
+    const container = document.getElementById('notification-items');
+    if (!notifications || notifications.length === 0) {
+        container.innerHTML = `
+            <div class="px-4 py-8 text-center">
+                <div style="width:40px;height:40px;border-radius:50%;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px">
+                    <i class="fa-solid fa-bell-slash" style="color:#94a3b8"></i>
+                </div>
+                <p style="font-size:13px;color:#94a3b8;margin:0">No notifications yet</p>
+            </div>`;
+        return;
+    }
+
+    let html = '';
+    notifications.forEach(n => {
+        const meta = typeIcons[n.type] || typeIcons.system;
+        const isUnread = !n.is_read;
+        const bgStyle = isUnread ? 'background-color: rgba(37, 99, 235, 0.04);' : '';
+        const titleWeight = isUnread ? 'font-weight:600;color:#0f172a;' : 'font-weight:500;color:#64748b;';
+        const contentColor = isUnread ? 'color:#475569;' : 'color:#94a3b8;';
+
+        html += `
+        <a href="${n.link ? '/dashboard/notifications/' + n.id + '/read' : '/dashboard/notifications'}"
+           class="block px-4 py-3 hover:bg-secondary-50 transition-colors no-underline" style="${bgStyle}">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+                <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:${meta.bg};display:flex;align-items:center;justify-content:center">
+                    <i class="fa-solid ${meta.icon}" style="font-size:13px;color:${meta.color}"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <p style="margin:0;font-size:13px;${titleWeight}overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                        ${n.title || 'Notification'}
+                    </p>
+                    <p style="margin:2px 0 0;font-size:12px;${contentColor}overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                        ${n.content}
+                    </p>
+                    <p style="margin:4px 0 0;font-size:11px;color:#94a3b8">
+                        ${formatTimeAgo(n.created_at)}
+                    </p>
+                </div>
+                ${isUnread ? '<div style="flex-shrink:0;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-top:6px"></div>' : ''}
+            </div>
+        </a>`;
+    });
+    container.innerHTML = html;
+}
+
+// Initial badge load
+(async function() {
+    try {
+        const res = await fetch('/dashboard/notifications/unread-count');
+        const data = await res.json();
+        updateBadge(data.count);
+    } catch(e) {}
+})();
+
+// Poll for new notifications every 30 seconds
+setInterval(async function() {
+    try {
+        const res = await fetch('/dashboard/notifications/unread-count');
+        const data = await res.json();
+        updateBadge(data.count);
+    } catch(e) {}
+}, 30000);
+</script>
 
 {% endblock %}
 

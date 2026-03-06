@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,9 @@ from api.v1.models.submission import Submission, SubmissionStatus
 from api.v1.models.milestone import Milestone
 from api.v1.models.document import Document
 from api.v1.models.feedback import Feedback
+from api.v1.models.notification import NotificationType
 from api.v1.services.project import ProjectService
+from api.v1.services.notification import NotificationService
 from api.utils.firebase_service import FirebaseService
 from api.v1.routes.dashboard.helpers import _get_user, _paginate
 
@@ -135,7 +137,7 @@ async def submission_create_page(request: Request, db: Session = Depends(get_db)
 
 
 @submissions_router.post('/new')
-async def submission_create(request: Request, db: Session = Depends(get_db)):
+async def submission_create(request: Request, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         payload = await request.form()
@@ -191,6 +193,17 @@ async def submission_create(request: Request, db: Session = Depends(get_db)):
             document_id=document_id,
             status=SubmissionStatus.SUBMITTED.value,
         )
+
+        # Notify supervisor about new submission
+        project = Project.fetch_by_id(db, project_id)
+        if project.supervisor_id:
+            NotificationService.notify(
+                db=db, bg_tasks=bg_tasks, user_id=project.supervisor_id,
+                title="New Submission",
+                content=f"{user.full_name} submitted \"{title}\" for project \"{project.title}\".",
+                notification_type=NotificationType.SUBMISSION.value,
+                link=f"/dashboard/submissions/{submission.id}",
+            )
 
         flash(request, 'Submission created successfully', MessageCategory.SUCCESS)
         return RedirectResponse(url=f"/dashboard/submissions/{submission.id}", status_code=303)
@@ -291,7 +304,7 @@ async def submission_edit_page(request: Request, submission_id: str, db: Session
 
 
 @submissions_router.post('/{submission_id}/edit')
-async def submission_edit(request: Request, submission_id: str, db: Session = Depends(get_db)):
+async def submission_edit(request: Request, submission_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         submission = Submission.fetch_by_id(db, submission_id)
@@ -342,6 +355,18 @@ async def submission_edit(request: Request, submission_id: str, db: Session = De
             update_data['document_id'] = None
 
         Submission.update(db, submission_id, **update_data)
+
+        # Notify supervisor about submission update
+        project = Project.fetch_by_id(db, submission.project_id)
+        if project.supervisor_id and project.supervisor_id != user.id:
+            NotificationService.notify(
+                db=db, bg_tasks=bg_tasks, user_id=project.supervisor_id,
+                title="Submission Updated",
+                content=f"{user.full_name} updated the submission \"{title or submission.title}\" for project \"{project.title}\".",
+                notification_type=NotificationType.SUBMISSION.value,
+                link=f"/dashboard/submissions/{submission_id}",
+            )
+
         flash(request, 'Submission updated successfully', MessageCategory.SUCCESS)
         return RedirectResponse(url=f"/dashboard/submissions/{submission_id}", status_code=303)
     except HTTPException as e:
@@ -352,7 +377,7 @@ async def submission_edit(request: Request, submission_id: str, db: Session = De
 # ─── Update Status (Review) ──────────────────────────
 
 @submissions_router.post('/{submission_id}/status')
-async def submission_update_status(request: Request, submission_id: str, db: Session = Depends(get_db)):
+async def submission_update_status(request: Request, submission_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         if user.role not in [UserRole.SUPERVISOR.value, UserRole.ADMIN.value]:
@@ -364,7 +389,19 @@ async def submission_update_status(request: Request, submission_id: str, db: Ses
             raise HTTPException(400, "Invalid status")
 
         Submission.update(db, submission_id, status=status)
-        flash(request, f'Submission marked as {status.replace("_", " ").title()}', MessageCategory.SUCCESS)
+
+        # Notify the submitter about status change
+        submission = Submission.fetch_by_id(db, submission_id)
+        status_label = status.replace("_", " ").title()
+        NotificationService.notify(
+            db=db, bg_tasks=bg_tasks, user_id=submission.submitted_by,
+            title=f"Submission {status_label}",
+            content=f"Your submission \"{submission.title}\" has been marked as {status_label} by {user.full_name}.",
+            notification_type=NotificationType.SUBMISSION.value,
+            link=f"/dashboard/submissions/{submission_id}",
+        )
+
+        flash(request, f'Submission marked as {status_label}', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)
     return RedirectResponse(url=f"/dashboard/submissions/{submission_id}", status_code=303)

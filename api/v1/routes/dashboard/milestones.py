@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -11,6 +11,8 @@ from api.v1.models.user import UserRole
 from api.v1.models.project import Project
 from api.v1.models.project_member import ProjectMember, ProjectMemberRole
 from api.v1.models.milestone import Milestone, MilestoneStatus
+from api.v1.models.notification import NotificationType
+from api.v1.services.notification import NotificationService
 from api.v1.routes.dashboard.helpers import _get_user
 
 
@@ -33,10 +35,21 @@ def _can_manage_project(db, user, project_id):
     return project.supervisor_id == user.id
 
 
+def _get_project_member_ids(db, project_id):
+    """Get all member IDs + supervisor ID for a project."""
+    member_ids = [m.user_id for m in db.query(ProjectMember).filter(
+        ProjectMember.project_id == project_id, ProjectMember.is_deleted == False
+    ).all()]
+    project = Project.fetch_by_id(db, project_id)
+    if project.supervisor_id and project.supervisor_id not in member_ids:
+        member_ids.append(project.supervisor_id)
+    return member_ids
+
+
 # ─── Create ───────────────────────────────────────────
 
 @milestones_router.post('/new')
-async def milestone_create(request: Request, project_id: str, db: Session = Depends(get_db)):
+async def milestone_create(request: Request, project_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         if not _can_manage_project(db, user, project_id):
@@ -63,6 +76,19 @@ async def milestone_create(request: Request, project_id: str, db: Session = Depe
             project_id=project_id,
             status=MilestoneStatus.PENDING.value,
         )
+
+        # Notify project members
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = _get_project_member_ids(db, project_id)
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title="New Milestone Added",
+            content=f"{user.full_name} added a new milestone \"{title}\" to project \"{project.title}\" (due {due_date}).",
+            notification_type=NotificationType.MILESTONE.value,
+            link=f"/dashboard/projects/{project_id}",
+            exclude_user_id=user.id,
+        )
+
         flash(request, 'Milestone created successfully', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)
@@ -72,7 +98,7 @@ async def milestone_create(request: Request, project_id: str, db: Session = Depe
 # ─── Update ───────────────────────────────────────────
 
 @milestones_router.post('/{milestone_id}/edit')
-async def milestone_edit(request: Request, project_id: str, milestone_id: str, db: Session = Depends(get_db)):
+async def milestone_edit(request: Request, project_id: str, milestone_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         if not _can_manage_project(db, user, project_id):
@@ -100,6 +126,20 @@ async def milestone_edit(request: Request, project_id: str, milestone_id: str, d
             update_data['status'] = status
 
         Milestone.update(db, milestone_id, **update_data)
+
+        # Notify project members
+        milestone = Milestone.fetch_by_id(db, milestone_id)
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = _get_project_member_ids(db, project_id)
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title="Milestone Updated",
+            content=f"{user.full_name} updated the milestone \"{milestone.title}\" in project \"{project.title}\".",
+            notification_type=NotificationType.MILESTONE.value,
+            link=f"/dashboard/projects/{project_id}",
+            exclude_user_id=user.id,
+        )
+
         flash(request, 'Milestone updated successfully', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)
@@ -109,7 +149,7 @@ async def milestone_edit(request: Request, project_id: str, milestone_id: str, d
 # ─── Update Status ────────────────────────────────────
 
 @milestones_router.post('/{milestone_id}/status')
-async def milestone_update_status(request: Request, project_id: str, milestone_id: str, db: Session = Depends(get_db)):
+async def milestone_update_status(request: Request, project_id: str, milestone_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         payload = await request.form()
@@ -118,7 +158,22 @@ async def milestone_update_status(request: Request, project_id: str, milestone_i
             raise HTTPException(400, "Invalid status")
 
         Milestone.update(db, milestone_id, status=status)
-        flash(request, f'Milestone marked as {status.replace("_", " ").title()}', MessageCategory.SUCCESS)
+
+        # Notify project members
+        milestone = Milestone.fetch_by_id(db, milestone_id)
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = _get_project_member_ids(db, project_id)
+        status_label = status.replace("_", " ").title()
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title=f"Milestone {status_label}",
+            content=f"The milestone \"{milestone.title}\" in project \"{project.title}\" has been marked as {status_label}.",
+            notification_type=NotificationType.MILESTONE.value,
+            link=f"/dashboard/projects/{project_id}",
+            exclude_user_id=user.id,
+        )
+
+        flash(request, f'Milestone marked as {status_label}', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)
     return RedirectResponse(url=f"/dashboard/projects/{project_id}", status_code=303)

@@ -11,6 +11,7 @@ from api.v1.routes.dashboard.departments import departments_router
 from api.v1.routes.dashboard.settings import settings_router
 from api.v1.routes.dashboard.documents import documents_router, document_view_router
 from api.v1.routes.dashboard.feedback import feedback_router
+from api.v1.routes.dashboard.notifications import notifications_router
 
 
 dashboard_router = APIRouter(prefix='/dashboard', tags=['Dashboard'])
@@ -28,3 +29,4 @@ dashboard_router.include_router(settings_router)
 dashboard_router.include_router(documents_router)
 dashboard_router.include_router(document_view_router)
 dashboard_router.include_router(feedback_router)
+dashboard_router.include_router(notifications_router)

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,9 @@ from api.v1.models.submission import Submission
 from api.v1.models.milestone import Milestone
 from api.v1.models.department import Department
 from api.v1.models.document import Document
+from api.v1.models.notification import NotificationType
 from api.v1.services.project import ProjectService
+from api.v1.services.notification import NotificationService
 from api.v1.routes.dashboard.helpers import _get_user, _paginate
 
 
@@ -77,7 +79,7 @@ async def project_create_page(request: Request, db: Session = Depends(get_db)):
 
 
 @projects_router.post('/new')
-async def project_create(request: Request, db: Session = Depends(get_db)):
+async def project_create(request: Request, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         payload = await request.form()
@@ -91,6 +93,14 @@ async def project_create(request: Request, db: Session = Depends(get_db)):
         supervisor_id = payload.get('supervisor_id')
         if supervisor_id:
             ProjectService.assign_supervisor(db, project.id, supervisor_id)
+            # Notify supervisor about new project
+            NotificationService.notify(
+                db=db, bg_tasks=bg_tasks, user_id=supervisor_id,
+                title="New Project Assigned",
+                content=f"{user.full_name} created a new project \"{project.title}\" and assigned you as supervisor.",
+                notification_type=NotificationType.PROJECT_UPDATE.value,
+                link=f"/dashboard/projects/{project.id}",
+            )
 
         flash(request, 'Project created successfully', MessageCategory.SUCCESS)
         return RedirectResponse(url=f"/dashboard/projects/{project.id}", status_code=303)
@@ -191,7 +201,7 @@ async def project_edit_page(request: Request, project_id: str, db: Session = Dep
 
 
 @projects_router.post('/{project_id}/edit')
-async def project_edit(request: Request, project_id: str, db: Session = Depends(get_db)):
+async def project_edit(request: Request, project_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         payload = await request.form()
@@ -218,6 +228,22 @@ async def project_edit(request: Request, project_id: str, db: Session = Depends(
         if supervisor_id:
             ProjectService.assign_supervisor(db, project_id, supervisor_id)
 
+        # Notify project members about edit
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = [m.user_id for m in db.query(ProjectMember).filter(
+            ProjectMember.project_id == project_id, ProjectMember.is_deleted == False
+        ).all()]
+        if project.supervisor_id and project.supervisor_id not in member_ids:
+            member_ids.append(project.supervisor_id)
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title="Project Updated",
+            content=f"{user.full_name} updated the project \"{project.title}\".",
+            notification_type=NotificationType.PROJECT_UPDATE.value,
+            link=f"/dashboard/projects/{project_id}",
+            exclude_user_id=user.id,
+        )
+
         flash(request, 'Project updated successfully', MessageCategory.SUCCESS)
         return RedirectResponse(url=f"/dashboard/projects/{project_id}", status_code=303)
     except HTTPException as e:
@@ -228,7 +254,7 @@ async def project_edit(request: Request, project_id: str, db: Session = Depends(
 # ─── Update Status ────────────────────────────────────
 
 @projects_router.post('/{project_id}/status')
-async def project_update_status(request: Request, project_id: str, db: Session = Depends(get_db)):
+async def project_update_status(request: Request, project_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         payload = await request.form()
@@ -237,6 +263,24 @@ async def project_update_status(request: Request, project_id: str, db: Session =
             raise HTTPException(400, "Invalid status")
 
         ProjectService.update_status(db, project_id, status)
+
+        # Notify project members about status change
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = [m.user_id for m in db.query(ProjectMember).filter(
+            ProjectMember.project_id == project_id, ProjectMember.is_deleted == False
+        ).all()]
+        if project.supervisor_id and project.supervisor_id not in member_ids:
+            member_ids.append(project.supervisor_id)
+        status_label = status.replace("_", " ").title()
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title="Project Status Changed",
+            content=f"The project \"{project.title}\" status has been changed to {status_label} by {user.full_name}.",
+            notification_type=NotificationType.PROJECT_UPDATE.value,
+            link=f"/dashboard/projects/{project_id}",
+            exclude_user_id=user.id,
+        )
+
         flash(request, 'Project status updated', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)
@@ -246,7 +290,7 @@ async def project_update_status(request: Request, project_id: str, db: Session =
 # ─── Delete ───────────────────────────────────────────
 
 @projects_router.post('/{project_id}/delete')
-async def project_delete(request: Request, project_id: str, db: Session = Depends(get_db)):
+async def project_delete(request: Request, project_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         # Only owner or admin can delete
@@ -256,6 +300,22 @@ async def project_delete(request: Request, project_id: str, db: Session = Depend
             )
             if not member or member.role != ProjectMemberRole.OWNER.value:
                 raise HTTPException(403, "Only the project owner or admin can delete this project")
+
+        # Notify members before deleting
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = [m.user_id for m in db.query(ProjectMember).filter(
+            ProjectMember.project_id == project_id, ProjectMember.is_deleted == False
+        ).all()]
+        if project.supervisor_id and project.supervisor_id not in member_ids:
+            member_ids.append(project.supervisor_id)
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title="Project Deleted",
+            content=f"The project \"{project.title}\" has been deleted by {user.full_name}.",
+            notification_type=NotificationType.PROJECT_UPDATE.value,
+            link="/dashboard/projects",
+            exclude_user_id=user.id,
+        )
 
         Project.soft_delete(db, project_id)
         flash(request, 'Project deleted successfully', MessageCategory.SUCCESS)
@@ -281,7 +341,7 @@ async def regenerate_invite(request: Request, project_id: str, db: Session = Dep
 # ─── Remove Member ────────────────────────────────────
 
 @projects_router.post('/{project_id}/members/{member_user_id}/remove')
-async def remove_member(request: Request, project_id: str, member_user_id: str, db: Session = Depends(get_db)):
+async def remove_member(request: Request, project_id: str, member_user_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     try:
         # Only owner or admin
@@ -292,7 +352,18 @@ async def remove_member(request: Request, project_id: str, member_user_id: str, 
             if not member or member.role != ProjectMemberRole.OWNER.value:
                 raise HTTPException(403, "Only the project owner can remove members")
 
+        project = Project.fetch_by_id(db, project_id)
         ProjectService.remove_member(db, project_id, member_user_id)
+
+        # Notify the removed member
+        NotificationService.notify(
+            db=db, bg_tasks=bg_tasks, user_id=member_user_id,
+            title="Removed from Project",
+            content=f"You have been removed from the project \"{project.title}\" by {user.full_name}.",
+            notification_type=NotificationType.PROJECT_UPDATE.value,
+            link="/dashboard/projects",
+        )
+
         flash(request, 'Member removed successfully', MessageCategory.SUCCESS)
     except HTTPException as e:
         flash(request, e.detail, MessageCategory.ERROR)

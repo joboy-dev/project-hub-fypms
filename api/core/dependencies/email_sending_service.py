@@ -85,13 +85,10 @@ async def send_email(
         logger.info('Config set up')
         
         template_context = {
-            'app_name': config('APP_NAME'),
-            'company_name': 'Wren HQ',
-            'terms_url': config('TERMS_URL'),
-            'privacy_policy_url': config('PRIVACY_POLICY_URL'),
+            'app_name': config('APP_NAME', "Project Hub"),
+            'company_name': 'Project Hub',
             'year': datetime.now().year,
             'support_email': 'josephkorede36@gmail.com',
-            'help_center_url': '#',
             **template_data
         } if apply_default_template_data else template_data
         

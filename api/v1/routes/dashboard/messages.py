@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,8 @@ from api.utils import paginator
 from api.utils.loggers import create_logger
 from api.v1.models.user import User
 from api.v1.models.message import Message
+from api.v1.models.notification import NotificationType
+from api.v1.services.notification import NotificationService
 from api.v1.routes.dashboard.helpers import _get_user
 
 
@@ -122,7 +124,7 @@ async def message_conversation(request: Request, contact_id: str, db: Session = 
 
 
 @messages_router.post('/{contact_id}')
-async def send_message(request: Request, contact_id: str, db: Session = Depends(get_db)):
+async def send_message(request: Request, contact_id: str, bg_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = _get_user(request)
     payload = await request.form()
     content = payload.get('content', '').strip()
@@ -137,6 +139,18 @@ async def send_message(request: Request, contact_id: str, db: Session = Depends(
         receiver_id=contact_id,
         project_id=payload.get('project_id') or None,
     )
+
+    # Notify the receiver
+    preview = content[:80] + ('...' if len(content) > 80 else '')
+    NotificationService.notify(
+        db=db, bg_tasks=bg_tasks, user_id=contact_id,
+        title="New Message",
+        content=f"{user.full_name} sent you a message: \"{preview}\"",
+        notification_type=NotificationType.MESSAGE.value,
+        link=f"/dashboard/messages/{user.id}",
+        send_email_notification=False,  # Messages are frequent, skip email
+    )
+
     return RedirectResponse(url=f"/dashboard/messages/{contact_id}", status_code=303)
 
 

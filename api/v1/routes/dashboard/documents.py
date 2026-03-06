@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, UploadFile, File
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from decouple import config
@@ -11,7 +11,9 @@ from api.v1.models.user import User, UserRole
 from api.v1.models.document import Document
 from api.v1.models.project import Project
 from api.v1.models.project_member import ProjectMember
+from api.v1.models.notification import NotificationType
 from api.utils.firebase_service import FirebaseService
+from api.v1.services.notification import NotificationService
 from api.v1.routes.dashboard.helpers import _get_user
 
 
@@ -71,6 +73,7 @@ async def document_view(request: Request, document_id: str, db: Session = Depend
 async def document_upload(
     request: Request,
     project_id: str,
+    bg_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     user = _get_user(request)
@@ -92,6 +95,22 @@ async def document_upload(
             uploaded_by=user.id,
             description=description,
             milestone_id=milestone_id,
+        )
+
+        # Notify project members + supervisor
+        project = Project.fetch_by_id(db, project_id)
+        member_ids = [m.user_id for m in db.query(ProjectMember).filter(
+            ProjectMember.project_id == project_id, ProjectMember.is_deleted == False
+        ).all()]
+        if project.supervisor_id and project.supervisor_id not in member_ids:
+            member_ids.append(project.supervisor_id)
+        NotificationService.notify_many(
+            db=db, bg_tasks=bg_tasks, user_ids=member_ids,
+            title="New Document Uploaded",
+            content=f"{user.full_name} uploaded \"{title}\" to project \"{project.title}\".",
+            notification_type=NotificationType.PROJECT_UPDATE.value,
+            link=f"/dashboard/projects/{project_id}",
+            exclude_user_id=user.id,
         )
 
         flash(request, f'Document "{document.title}" uploaded successfully', MessageCategory.SUCCESS)
