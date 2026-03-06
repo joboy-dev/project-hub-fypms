@@ -166,4 +166,5 @@ filestorage
 logs/*.log
 serviceAccount.json
 .history
+*.db
 # alembic/versions/*.py
