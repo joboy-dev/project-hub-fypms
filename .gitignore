@@ -163,7 +163,7 @@ cython_debug/
 
 tmp
 filestorage
-logs/
+logs/*.log
 serviceAccount.json
 .history
-alembic/versions/*.py
+# alembic/versions/*.py
