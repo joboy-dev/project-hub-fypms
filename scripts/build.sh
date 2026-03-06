@@ -13,6 +13,3 @@ pip install -r requirements.txt
 
 echo "Running database migrations..."
 alembic upgrade head
-
-echo "Creating/Updating organization role and permissions..."
-python3 scripts/seeders/seed_org_role_permissions.py
