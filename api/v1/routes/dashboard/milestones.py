@@ -68,6 +68,9 @@ async def milestone_create(request: Request, project_id: str, bg_tasks: Backgrou
         except ValueError:
             raise HTTPException(400, "Invalid date format")
 
+        if parsed_due_date.date() < datetime.now().date():
+            raise HTTPException(400, "Milestone due date cannot be in the past")
+
         Milestone.create(
             db=db,
             title=title,
@@ -117,9 +120,12 @@ async def milestone_edit(request: Request, project_id: str, milestone_id: str, b
         due_date = payload.get('due_date', '').strip()
         if due_date:
             try:
-                update_data['due_date'] = datetime.fromisoformat(due_date)
+                parsed_due_date = datetime.fromisoformat(due_date)
             except ValueError:
                 raise HTTPException(400, "Invalid date format")
+            if parsed_due_date.date() < datetime.now().date():
+                raise HTTPException(400, "Milestone due date cannot be in the past")
+            update_data['due_date'] = parsed_due_date
 
         status = payload.get('status', '').strip()
         if status and status in [s.value for s in MilestoneStatus]:

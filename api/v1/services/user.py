@@ -5,6 +5,7 @@ from fastapi.datastructures import FormData
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from decouple import config
+from email_validator import EmailNotValidError, validate_email
 
 from api.core.dependencies.email_sending_service import send_email
 from api.core.dependencies.flash_messages import MessageCategory, flash
@@ -33,10 +34,17 @@ class UserService:
         
         first_name = payload.get('first_name', '').strip()
         last_name = payload.get('last_name', '').strip()
-        email = payload.get('email').lower().strip()
+        raw_email = payload.get('email', '').strip()
         
         if not first_name or not last_name:
             raise HTTPException(400, 'First name and last name are required')
+
+        try:
+            # Validate syntax and domain deliverability to reduce fake registrations.
+            validated_email = validate_email(raw_email, check_deliverability=True)
+            email = validated_email.normalized
+        except EmailNotValidError as exc:
+            raise HTTPException(400, f'Invalid email address: {str(exc)}')
         
         user_with_email_exists = User.fetch_one_by_field(db, throw_error=False, email=email)
         if user_with_email_exists:

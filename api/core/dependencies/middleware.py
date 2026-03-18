@@ -15,7 +15,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # Define route access
         self.unauthenticated_routes = [
-            "/", "/auth/student", 
+            "/", "/auth", "/auth/student", 
             "/auth/supervisor", "/auth/admin",
         ]
         self.protected_prefixes = [

@@ -94,12 +94,11 @@ async def message_conversation(request: Request, contact_id: str, db: Session = 
         Message.is_deleted == False,
         ((Message.sender_id == user.id) & (Message.receiver_id == contact_id)) |
         ((Message.sender_id == contact_id) & (Message.receiver_id == user.id))
-    ).order_by(Message.created_at.desc())
+    ).order_by(Message.created_at.asc())
 
     count = query.count()
     offset = (page - 1) * size
     messages = query.offset(offset).limit(size).all()
-    messages.reverse()
 
     # Mark as read
     db.query(Message).filter(

@@ -80,10 +80,14 @@ async def notifications_page(request: Request, db: Session = Depends(get_db)):
 @notifications_router.get('/{notification_id}/read')
 async def notification_mark_read(request: Request, notification_id: str, db: Session = Depends(get_db)):
     user = _get_user(request)
+    notification = Notification.fetch_by_id(db, notification_id)
+    if notification.user_id != user.id:
+        flash(request, 'Notification not found.', MessageCategory.ERROR)
+        return RedirectResponse(url='/dashboard/notifications', status_code=303)
+
     NotificationService.mark_as_read(db, notification_id, user.id)
 
     # If the notification has a link, redirect to it
-    notification = Notification.fetch_by_id(db, notification_id)
     if notification.link:
         return RedirectResponse(url=notification.link, status_code=303)
 
@@ -122,4 +126,4 @@ async def notifications_recent(request: Request, db: Session = Depends(get_db)):
     return JSONResponse(content={
         "notifications": [n.to_dict() for n in notifications],
         "unread_count": NotificationService.get_unread_count(db, user.id),
-    })
+    }, headers={"Cache-Control": "no-store"})

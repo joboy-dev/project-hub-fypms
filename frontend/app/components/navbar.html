@@ -25,18 +25,18 @@
 
             <!-- Role-based auth links -->
             <div class="flex items-center gap-3 ml-2">
-                <a href="{{ url_for('student_auth') }}"
+                <a href="/auth?role=student&mode=login"
                    class="btn text-sm bg-primary-50 text-primary border border-primary-200 hover:bg-primary hover:text-white">
-                    <i class="fa-solid fa-graduation-cap mr-1.5"></i> Student
+                    Login
                 </a>
-                <a href="{{ url_for('supervisor_auth') }}"
+                <!-- <a href="/auth?role=supervisor"
                    class="btn text-sm bg-gold-50 text-gold-700 border border-gold-200 hover:bg-gold hover:text-white">
                     <i class="fa-solid fa-chalkboard-teacher mr-1.5"></i> Supervisor
                 </a>
-                <a href="{{ url_for('admin_auth') }}"
+                <a href="/auth?role=admin"
                    class="btn text-sm bg-secondary-100 text-secondary-700 border border-secondary-300 hover:bg-secondary-800 hover:text-white">
                     <i class="fa-solid fa-shield-halved mr-1.5"></i> Admin
-                </a>
+                </a> -->
             </div>
             {% endif %}
         </div>
@@ -74,15 +74,15 @@
                 How It Works
             </a>
             <hr class="border-secondary-200">
-            <a href="{{ url_for('student_auth') }}"
+            <a href="/auth?role=student"
                class="btn text-sm bg-primary-50 text-primary border border-primary-200 text-center w-full">
                 <i class="fa-solid fa-graduation-cap mr-1.5"></i> Student Portal
             </a>
-            <a href="{{ url_for('supervisor_auth') }}"
+            <a href="/auth?role=supervisor"
                class="btn text-sm bg-gold-50 text-gold-700 border border-gold-200 text-center w-full">
                 <i class="fa-solid fa-chalkboard-teacher mr-1.5"></i> Supervisor Portal
             </a>
-            <a href="{{ url_for('admin_auth') }}"
+            <a href="/auth?role=admin"
                class="btn text-sm bg-secondary-100 text-secondary-700 border border-secondary-300 text-center w-full">
                 <i class="fa-solid fa-shield-halved mr-1.5"></i> Admin Portal
             </a>

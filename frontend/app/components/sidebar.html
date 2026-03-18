@@ -102,8 +102,51 @@
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
+    if (window.innerWidth >= 1024) {
+        sidebar.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('sidebar-collapsed') ? '1' : '0');
+        return;
+    }
+
     sidebar.classList.toggle('-translate-x-full');
     overlay.classList.toggle('hidden');
     document.body.classList.toggle('overflow-hidden');
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const sidebar = document.getElementById('sidebar');
+    if (window.innerWidth >= 1024 && localStorage.getItem('sidebar-collapsed') === '1') {
+        sidebar.classList.add('sidebar-collapsed');
+    }
+});
 </script>
+
+<style>
+@media (min-width: 1024px) {
+    #sidebar.sidebar-collapsed {
+        width: 5rem;
+    }
+
+    #sidebar.sidebar-collapsed .sidebar-label {
+        display: none;
+    }
+
+    #sidebar.sidebar-collapsed .sidebar-link {
+        justify-content: center;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    #sidebar.sidebar-collapsed .sidebar-link i {
+        width: auto;
+    }
+
+    #sidebar.sidebar-collapsed .sidebar-link .ml-auto {
+        display: none;
+    }
+
+    #sidebar.sidebar-collapsed .border-t .flex.items-center.gap-3 {
+        justify-content: center;
+    }
+}
+</style>

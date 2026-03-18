@@ -1,17 +1,13 @@
 from datetime import timedelta
-from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, Request, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from decouple import config
 
 from api.core.dependencies.context import add_template_context
 from api.core.dependencies.flash_messages import MessageCategory, flash
-from api.core.dependencies.form_builder import build_form
 from api.db.database import get_db
 from api.utils.settings import settings
 from api.utils.loggers import create_logger
-from api.utils.responses import success_response
-from api.utils.telex_notification import TelexNotification
 from api.v1.models.user import User, UserRole
 from api.v1.services.auth import AuthService
 from api.v1.services.user import UserService
@@ -19,6 +15,21 @@ from api.v1.services.user import UserService
 
 auth_router = APIRouter(prefix='/auth', tags=['Auth'])
 logger = create_logger(__name__)
+
+ROLE_META = {
+    UserRole.STUDENT.value: {
+        'label': 'Student',
+        'icon': 'fa-graduation-cap',
+    },
+    UserRole.SUPERVISOR.value: {
+        'label': 'Supervisor',
+        'icon': 'fa-chalkboard-teacher',
+    },
+    UserRole.ADMIN.value: {
+        'label': 'Administrator',
+        'icon': 'fa-shield-halved',
+    },
+}
 
 
 def _pop_pending_invite(request: Request):
@@ -29,12 +40,20 @@ def _pop_pending_invite(request: Request):
     return None
 
 
-def _set_auth_cookies(response: RedirectResponse, access_token: str, refresh_token: str):
+def _set_auth_cookies(
+    response: RedirectResponse,
+    access_token: str,
+    refresh_token: str,
+    remember_me: bool = False,
+):
     """Helper to set authentication cookies on a response."""
+    access_expiry = timedelta(days=30) if remember_me else timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_expiry = timedelta(days=45) if remember_me else timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
-        expires=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
+        expires=refresh_expiry,
         httponly=True,
         secure=True,
         samesite="none",
@@ -42,7 +61,7 @@ def _set_auth_cookies(response: RedirectResponse, access_token: str, refresh_tok
     response.set_cookie(
         key="access_token",
         value=access_token,
-        expires=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        expires=access_expiry,
         httponly=True,
         secure=True,
         samesite="none",
@@ -52,10 +71,13 @@ def _set_auth_cookies(response: RedirectResponse, access_token: str, refresh_tok
 
 def _handle_login(request: Request, db: Session, payload, role: str):
     """Handle login logic for any role."""
-    user, access_token, refresh_token = AuthService.authenticate(
+    remember_me = str(payload.get('remember_me', '')).lower() in {'on', 'true', '1', 'yes'}
+
+    user, _, _ = AuthService.authenticate(
         db, 
         email=payload.get('email'), 
-        password=payload.get('password')
+        password=payload.get('password'),
+        create_token=False,
     )
     
     # Verify user has the correct role
@@ -64,12 +86,17 @@ def _handle_login(request: Request, db: Session, payload, role: str):
     
     logger.info(f'User {user.email} ({role}) logged in successfully')
     flash(request, 'Logged in successfully', MessageCategory.SUCCESS)
+
+    access_expiry_minutes = (30 * 24 * 60) if remember_me else None
+    refresh_expiry_minutes = (45 * 24 * 60) if remember_me else None
+    access_token = AuthService.create_access_token(db, user.id, expiry_in_minutes=access_expiry_minutes)
+    refresh_token = AuthService.create_refresh_token(db, user.id, expiry_in_minutes=refresh_expiry_minutes)
     
     # Check for pending invite code
     redirect_url = _pop_pending_invite(request) or "/dashboard"
     
     response = RedirectResponse(url=redirect_url, status_code=303)
-    return _set_auth_cookies(response, access_token, refresh_token)
+    return _set_auth_cookies(response, access_token, refresh_token, remember_me=remember_me)
 
 
 def _handle_register(request: Request, db: Session, payload, bg_tasks: BackgroundTasks, role: str):
@@ -95,112 +122,96 @@ def _handle_register(request: Request, db: Session, payload, bg_tasks: Backgroun
     return _set_auth_cookies(response, access_token, refresh_token)
 
 
-# ─── Student Auth ──────────────────────────────────────────────
+def _resolve_role(request: Request) -> str:
+    role = (request.query_params.get('role') or '').strip().lower()
+    if role not in ROLE_META:
+        return UserRole.STUDENT.value
+    return role
 
-@auth_router.api_route('/student', methods=["GET", "POST"])
+
+@auth_router.api_route('', methods=["GET", "POST"])
 @add_template_context('pages/auth/role_auth.html')
-async def student_auth(
+async def auth_portal(
     request: Request,
     bg_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """Student authentication page with tabbed login/register."""
-    
+    """Single RBAC auth page for student, supervisor and admin."""
+    role = _resolve_role(request)
+    mode = request.query_params.get('mode', 'login').strip().lower()
+    mode = mode if mode in {'login', 'register'} else 'login'
+
     context = {
-        'role': UserRole.STUDENT.value,
-        'role_label': 'Student',
-        'role_icon': 'fa-graduation-cap',
-        'action_url': '/auth/student',
+        'role': role,
+        'role_label': ROLE_META[role]['label'],
+        'role_icon': ROLE_META[role]['icon'],
+        'action_url': f'/auth?role={role}&mode={mode}',
+        'active_mode': mode,
     }
-    
+
     if request.method == 'POST':
         payload = await request.form()
-        action = payload.get('action', 'login')
-        
+        action = (payload.get('action') or mode).strip().lower()
+
         try:
+            if action == 'forgot_password':
+                email = (payload.get('email') or '').strip().lower()
+                if not email:
+                    raise HTTPException(400, 'Please provide your account email address.')
+
+                user = User.fetch_one_by_field(db, throw_error=False, email=email)
+                if user:
+                    await AuthService.send_password_reset_link(db, email, bg_tasks)
+
+                flash(request, 'If this email exists, password reset instructions have been initiated.', MessageCategory.INFO)
+                return RedirectResponse(url=f'/auth?role={role}&mode=login', status_code=303)
+
             if action == 'register':
-                return _handle_register(request, db, payload, bg_tasks, UserRole.STUDENT.value)
-            else:
-                return _handle_login(request, db, payload, UserRole.STUDENT.value)
+                return _handle_register(request, db, payload, bg_tasks, role)
+            return _handle_login(request, db, payload, role)
         except HTTPException as e:
             flash(request, e.detail, MessageCategory.ERROR)
-            context['form_data'] = dict(payload)
-            context['active_tab'] = action
-            return context
-    
+            redirect_mode = 'register' if action == 'register' else 'login'
+            return RedirectResponse(url=f'/auth?role={role}&mode={redirect_mode}', status_code=303)
+
     return context
 
 
-# ─── Supervisor Auth ───────────────────────────────────────────
+@auth_router.api_route('/student', methods=['GET', 'POST'])
+async def student_auth():
+    return RedirectResponse(url='/auth?role=student', status_code=303)
 
-@auth_router.api_route('/supervisor', methods=["GET", "POST"])
-@add_template_context('pages/auth/role_auth.html')
-async def supervisor_auth(
+
+@auth_router.api_route('/supervisor', methods=['GET', 'POST'])
+async def supervisor_auth():
+    return RedirectResponse(url='/auth?role=supervisor', status_code=303)
+
+
+@auth_router.api_route('/admin', methods=['GET', 'POST'])
+async def admin_auth():
+    return RedirectResponse(url='/auth?role=admin', status_code=303)
+
+
+@auth_router.post('/forgot-password')
+async def forgot_password(
     request: Request,
     bg_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Supervisor authentication page with tabbed login/register."""
-    
-    context = {
-        'role': UserRole.SUPERVISOR.value,
-        'role_label': 'Supervisor',
-        'role_icon': 'fa-chalkboard-teacher',
-        'action_url': '/auth/supervisor',
-    }
-    
-    if request.method == 'POST':
-        payload = await request.form()
-        action = payload.get('action', 'login')
-        
-        try:
-            if action == 'register':
-                return _handle_register(request, db, payload, bg_tasks, UserRole.SUPERVISOR.value)
-            else:
-                return _handle_login(request, db, payload, UserRole.SUPERVISOR.value)
-        except HTTPException as e:
-            flash(request, e.detail, MessageCategory.ERROR)
-            context['form_data'] = dict(payload)
-            context['active_tab'] = action
-            return context
-    
-    return context
+    payload = await request.form()
+    email = (payload.get('email') or '').strip().lower()
+    role = (payload.get('role') or UserRole.STUDENT.value).strip().lower()
 
+    if not email:
+        flash(request, 'Please provide your account email address.', MessageCategory.ERROR)
+        return RedirectResponse(url=f'/auth?role={role}&mode=login', status_code=303)
 
-# ─── Admin Auth ────────────────────────────────────────────────
+    user = User.fetch_one_by_field(db, throw_error=False, email=email)
+    if user:
+        await AuthService.send_password_reset_link(db, email, bg_tasks)
 
-@auth_router.api_route('/admin', methods=["GET", "POST"])
-@add_template_context('pages/auth/role_auth.html')
-async def admin_auth(
-    request: Request,
-    bg_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    """Admin authentication page with tabbed login/register."""
-    
-    context = {
-        'role': UserRole.ADMIN.value,
-        'role_label': 'Administrator',
-        'role_icon': 'fa-shield-halved',
-        'action_url': '/auth/admin',
-    }
-    
-    if request.method == 'POST':
-        payload = await request.form()
-        action = payload.get('action', 'login')
-        
-        try:
-            if action == 'register':
-                return _handle_register(request, db, payload, bg_tasks, UserRole.ADMIN.value)
-            else:
-                return _handle_login(request, db, payload, UserRole.ADMIN.value)
-        except HTTPException as e:
-            flash(request, e.detail, MessageCategory.ERROR)
-            context['form_data'] = dict(payload)
-            context['active_tab'] = action
-            return context
-    
-    return context
+    flash(request, 'If this email exists, password reset instructions have been initiated.', MessageCategory.INFO)
+    return RedirectResponse(url=f'/auth?role={role}&mode=login', status_code=303)
 
 
 # ─── Logout ────────────────────────────────────────────────────

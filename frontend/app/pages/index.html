@@ -19,7 +19,7 @@
             <div class="animate-fade-in-up">
                 <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full px-4 py-2 mb-6 border border-white/20">
                     <span class="w-2 h-2 bg-gold rounded-full animate-pulse"></span>
-                    <span class="text-white/90 text-sm font-medium">Final Year Project Management</span>
+                    <span class="text-white/90 text-sm font-medium">Final Year Project Management System</span>
                 </div>
                 
                 <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
@@ -33,7 +33,7 @@
                 </p>
                 
                 <div class="flex flex-wrap gap-4 mb-12">
-                    <a href="/auth/student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg hover:shadow-xl">
+                    <a href="/auth?role=student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg hover:shadow-xl">
                         <i class="fa-solid fa-rocket mr-2"></i> Get Started
                     </a>
                     <a href="#features" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
@@ -41,20 +41,16 @@
                     </a>
                 </div>
 
-                <!-- Quick stats -->
-                <div class="flex flex-wrap gap-8">
-                    <div class="text-center">
-                        <div class="text-2xl md:text-3xl font-bold text-white counter" data-target="500">0</div>
-                        <div class="text-primary-300 text-sm">Projects Managed</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl md:text-3xl font-bold text-white counter" data-target="120">0</div>
-                        <div class="text-primary-300 text-sm">Supervisors</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl md:text-3xl font-bold text-white counter" data-target="98">0</div>
-                        <div class="text-primary-300 text-sm">% Satisfaction</div>
-                    </div>
+                <div class="flex flex-wrap gap-3 text-sm text-primary-100">
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/10">
+                        <i class="fa-solid fa-comments text-gold-300"></i> Centralized communication
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/10">
+                        <i class="fa-solid fa-list-check text-gold-300"></i> Structured milestone tracking
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/10">
+                        <i class="fa-solid fa-cloud-arrow-up text-gold-300"></i> Submission and document workflows
+                    </span>
                 </div>
             </div>
 
@@ -111,7 +107,7 @@
                     </div>
 
                     <!-- Floating message card -->
-                    <div class="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-xl p-4 animate-float border border-secondary-100" style="animation-delay: 1s">
+                    <div class="absolute -bottom-16 left-8 bg-white rounded-xl shadow-xl p-4 animate-float border border-secondary-100" style="animation-delay: 1s">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                                 <i class="fa-solid fa-comment text-primary text-sm"></i>
@@ -127,12 +123,6 @@
         </div>
     </div>
 
-    <!-- Wave separator -->
-    <div class="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 50L48 45C96 40 192 30 288 33C384 36 480 52 576 58C672 64 768 60 864 52C960 44 1056 32 1152 30C1248 28 1344 36 1392 40L1440 44V100H0V50Z" fill="white"/>
-        </svg>
-    </div>
 </section>
 
 
@@ -308,14 +298,13 @@
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> Chat with supervisors</li>
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> View feedback and grades</li>
                 </ul>
-                <a href="/auth/student" class="btn btn-primary w-full text-center">
+                <a href="/auth?role=student" class="btn btn-primary w-full text-center">
                     Student Portal <i class="fa-solid fa-arrow-right ml-2"></i>
                 </a>
             </div>
 
             <!-- Supervisor Card -->
             <div class="group relative bg-gradient-to-br from-gold-50 to-white rounded-2xl border border-gold-200 p-8 hover:shadow-xl hover:-translate-y-2 reveal">
-                <div class="absolute -top-3 right-6 bg-gold text-white text-xs font-bold px-3 py-1 rounded-full">Popular</div>
                 <div class="w-14 h-14 bg-gold/10 rounded-2xl flex items-center justify-center mb-6">
                     <i class="fa-solid fa-chalkboard-teacher text-2xl text-gold-600"></i>
                 </div>
@@ -326,7 +315,7 @@
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Assign tasks and deadlines</li>
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Grade student progress</li>
                 </ul>
-                <a href="/auth/supervisor" class="btn btn-gold w-full text-center">
+                <a href="/auth?role=supervisor" class="btn btn-gold w-full text-center">
                     Supervisor Portal <i class="fa-solid fa-arrow-right ml-2"></i>
                 </a>
             </div>
@@ -343,7 +332,7 @@
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Department management</li>
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Generate reports</li>
                 </ul>
-                <a href="/auth/admin" class="btn bg-secondary-800 text-white hover:bg-secondary-900 w-full text-center">
+                <a href="/auth?role=admin" class="btn bg-secondary-800 text-white hover:bg-secondary-900 w-full text-center">
                     Admin Portal <i class="fa-solid fa-arrow-right ml-2"></i>
                 </a>
             </div>
@@ -361,10 +350,10 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
                 <p class="text-primary-200 text-lg mb-8 max-w-xl mx-auto">Join hundreds of students and supervisors already using ProjectHub to streamline their final year projects.</p>
                 <div class="flex flex-wrap gap-4 justify-center">
-                    <a href="/auth/student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg">
+                    <a href="/auth?role=student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg">
                         <i class="fa-solid fa-graduation-cap mr-2"></i> I'm a Student
                     </a>
-                    <a href="/auth/supervisor" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
+                    <a href="/auth?role=supervisor" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
                         <i class="fa-solid fa-chalkboard-teacher mr-2"></i> I'm a Supervisor
                     </a>
                 </div>

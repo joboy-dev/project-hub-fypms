@@ -58,7 +58,7 @@ class AuthService:
         return pwd_context.verify(secret, hash)
     
     @classmethod
-    def create_access_token(cls, db: Session, user_id: str):
+    def create_access_token(cls, db: Session, user_id: str, expiry_in_minutes: Optional[int] = None):
         
         # Check if user has a token already
         TokenService.check_and_revoke_existing_token(db, user_id=user_id, token_type=TokenType.ACCESS.value)
@@ -66,13 +66,13 @@ class AuthService:
         encoded_jwt = TokenService.create_token(
             db=db,
             token_type=TokenType.ACCESS.value,
-            expiry_in_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            expiry_in_minutes=expiry_in_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES,
             user_id=user_id
         )
         return encoded_jwt
 
     @classmethod
-    def create_refresh_token(cls, db: Session, user_id: str):
+    def create_refresh_token(cls, db: Session, user_id: str, expiry_in_minutes: Optional[int] = None):
         
         # Check if user has a token already and it has not expired
         TokenService.check_and_revoke_existing_token(db, user_id=user_id, token_type=TokenType.REFRESH.value)
@@ -80,7 +80,7 @@ class AuthService:
         encoded_jwt = TokenService.create_token(
             db=db,
             token_type=TokenType.REFRESH.value,
-            expiry_in_minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES,
+            expiry_in_minutes=expiry_in_minutes or settings.REFRESH_TOKEN_EXPIRE_MINUTES,
             user_id=user_id
         )
         return encoded_jwt
@@ -236,20 +236,25 @@ class AuthService:
             expiry_in_minutes=expiry_minutes,
             user_id=user.id,
         )
-        
-        # TODO: Update the url
-        # bg_tasks.add_task(
-        #     send_email,
-        #     recipients=[user.email],
-        #     template_name='password-reset.html',
-        #     subject='Password Reset',
-        #     template_data={
-        #         'user': user,
-        #         'reset_utl': f"{config('AUTH_APP_URL')}/password-reset",
-        #         'token': password_reset_token,
-        #         'expiry_minutes': expiry_minutes
-        #     }
-        # )
+
+        # Use the existing notification email template until a dedicated
+        # password-reset page/template is introduced.
+        bg_tasks.add_task(
+            send_email,
+            recipients=[user.email],
+            template_name='notification.html',
+            subject='ProjectHub - Password Reset Request',
+            template_data={
+                'user_name': user.first_name,
+                'notification_title': 'Password reset request received',
+                'notification_content': (
+                    f'Use this reset token to complete password reset within {expiry_minutes} minutes: '
+                    f'{password_reset_token}'
+                ),
+                'notification_type': 'system',
+                'action_url': None,
+            }
+        )
         
         return password_reset_token
 

@@ -41,7 +41,7 @@ async def join_project_via_invite(
         # Store invite code in session so we can process it after login
         request.session['pending_invite_code'] = invite_code
         flash(request, 'Please log in to join the project.', MessageCategory.INFO)
-        return RedirectResponse(url='/auth/student', status_code=303)
+        return RedirectResponse(url='/auth?role=student', status_code=303)
 
     try:
         project, message = ProjectService.join_via_invite(db, invite_code, user.id)

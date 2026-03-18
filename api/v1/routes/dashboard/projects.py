@@ -17,6 +17,7 @@ from api.v1.models.document import Document
 from api.v1.models.notification import NotificationType
 from api.v1.services.project import ProjectService
 from api.v1.services.notification import NotificationService
+from api.v1.services.document import ALLOWED_EXTENSIONS
 from api.v1.routes.dashboard.helpers import _get_user, _paginate
 
 
@@ -172,6 +173,7 @@ async def project_detail(request: Request, project_id: str, db: Session = Depend
         "milestones": [m.to_dict() for m in milestones],
         "submissions": [s.to_dict() for s in submissions],
         "documents": [d.to_dict() for d in documents],
+        "document_accept": ",".join(f".{ext}" for ext in sorted(ALLOWED_EXTENSIONS)),
         "status_choices": status_choices,
     }
 

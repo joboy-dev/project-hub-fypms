@@ -7,7 +7,7 @@
 {# ── Stat Cards ── #}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
     {% if user_role == 'student' %}
-    <div class="card group hover:border-primary-200">
+    <a href="/dashboard/projects" class="card group hover:border-primary-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                 <i class="fa-solid fa-folder-open"></i>
@@ -16,8 +16,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_projects }}</p>
         <p class="text-xs text-secondary-400 mt-1">{{ stats.active_projects }} active</p>
-    </div>
-    <div class="card group hover:border-gold-200">
+    </a>
+    <a href="/dashboard/submissions" class="card group hover:border-gold-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-gold-50 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-white transition-colors">
                 <i class="fa-solid fa-file-arrow-up"></i>
@@ -26,8 +26,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_submissions }}</p>
         <p class="text-xs text-secondary-400 mt-1">Total submitted</p>
-    </div>
-    <div class="card group hover:border-green-200">
+    </a>
+    <a href="/dashboard/projects" class="card group hover:border-green-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-emerald-50 text-accent-success flex items-center justify-center group-hover:bg-accent-success group-hover:text-white transition-colors">
                 <i class="fa-solid fa-list-check"></i>
@@ -36,8 +36,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.pending_milestones }}</p>
         <p class="text-xs text-secondary-400 mt-1">Pending tasks</p>
-    </div>
-    <div class="card group hover:border-blue-200">
+    </a>
+    <a href="/dashboard/messages" class="card group hover:border-blue-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-accent-info flex items-center justify-center group-hover:bg-accent-info group-hover:text-white transition-colors">
                 <i class="fa-solid fa-comments"></i>
@@ -46,10 +46,10 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.unread_messages }}</p>
         <p class="text-xs text-secondary-400 mt-1">Unread</p>
-    </div>
+    </a>
 
     {% elif user_role == 'supervisor' %}
-    <div class="card group hover:border-primary-200">
+    <a href="/dashboard/projects" class="card group hover:border-primary-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                 <i class="fa-solid fa-folder-open"></i>
@@ -58,8 +58,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.supervised_projects }}</p>
         <p class="text-xs text-secondary-400 mt-1">{{ stats.active_projects }} active</p>
-    </div>
-    <div class="card group hover:border-gold-200">
+    </a>
+    <a href="/dashboard/students" class="card group hover:border-gold-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-gold-50 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-white transition-colors">
                 <i class="fa-solid fa-user-graduate"></i>
@@ -68,8 +68,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_students }}</p>
         <p class="text-xs text-secondary-400 mt-1">Under supervision</p>
-    </div>
-    <div class="card group hover:border-orange-200">
+    </a>
+    <a href="/dashboard/submissions" class="card group hover:border-orange-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-orange-50 text-accent-warning flex items-center justify-center group-hover:bg-accent-warning group-hover:text-white transition-colors">
                 <i class="fa-solid fa-clock"></i>
@@ -78,8 +78,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.pending_reviews }}</p>
         <p class="text-xs text-secondary-400 mt-1">Awaiting review</p>
-    </div>
-    <div class="card group hover:border-blue-200">
+    </a>
+    <a href="/dashboard/messages" class="card group hover:border-blue-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-accent-info flex items-center justify-center group-hover:bg-accent-info group-hover:text-white transition-colors">
                 <i class="fa-solid fa-comments"></i>
@@ -88,11 +88,11 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.unread_messages }}</p>
         <p class="text-xs text-secondary-400 mt-1">Unread</p>
-    </div>
+    </a>
 
     {% else %}
     {# Admin #}
-    <div class="card group hover:border-primary-200">
+    <a href="/dashboard/projects" class="card group hover:border-primary-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                 <i class="fa-solid fa-folder-open"></i>
@@ -101,8 +101,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_projects }}</p>
         <p class="text-xs text-secondary-400 mt-1">{{ stats.active_projects }} active</p>
-    </div>
-    <div class="card group hover:border-gold-200">
+    </a>
+    <a href="/dashboard/users" class="card group hover:border-gold-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-gold-50 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-white transition-colors">
                 <i class="fa-solid fa-users"></i>
@@ -111,8 +111,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_users }}</p>
         <p class="text-xs text-secondary-400 mt-1">{{ stats.total_students }} students · {{ stats.total_supervisors }} supervisors</p>
-    </div>
-    <div class="card group hover:border-green-200">
+    </a>
+    <a href="/dashboard/departments" class="card group hover:border-green-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-emerald-50 text-accent-success flex items-center justify-center group-hover:bg-accent-success group-hover:text-white transition-colors">
                 <i class="fa-solid fa-building-columns"></i>
@@ -121,8 +121,8 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_departments }}</p>
         <p class="text-xs text-secondary-400 mt-1">Registered</p>
-    </div>
-    <div class="card group hover:border-orange-200">
+    </a>
+    <a href="/dashboard/submissions" class="card group hover:border-orange-200 block no-underline">
         <div class="flex items-center justify-between mb-3">
             <div class="w-10 h-10 rounded-xl bg-orange-50 text-accent-warning flex items-center justify-center group-hover:bg-accent-warning group-hover:text-white transition-colors">
                 <i class="fa-solid fa-file-arrow-up"></i>
@@ -131,7 +131,7 @@
         </div>
         <p class="text-2xl font-bold text-secondary-900">{{ stats.total_submissions }}</p>
         <p class="text-xs text-secondary-400 mt-1">{{ stats.pending_submissions }} pending</p>
-    </div>
+    </a>
     {% endif %}
 </div>
 
