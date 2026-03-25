@@ -72,14 +72,14 @@
 
     {# ── Right: Document Info Sidebar ── #}
     <div class="space-y-6">
-        <div class="card">
+        <div class="card overflow-hidden">
             <h2 class="text-base font-semibold text-secondary-900 mb-4">
                 <i class="fa-solid fa-circle-info mr-1.5 text-secondary-400"></i> Document Info
             </h2>
             <div class="space-y-3 text-sm">
                 <div class="py-2 border-b border-secondary-100">
                     <span class="text-secondary-400 block text-xs mb-0.5">Title</span>
-                    <span class="text-secondary-900 font-medium">{{ document.title or document.file_name }}</span>
+                    <span class="text-secondary-900 font-medium break-words">{{ document.title or document.file_name }}</span>
                 </div>
                 <div class="py-2 border-b border-secondary-100">
                     <span class="text-secondary-400 block text-xs mb-0.5">File Name</span>
@@ -107,7 +107,7 @@
                 {% endif %}
                 <div class="py-2 border-b border-secondary-100">
                     <span class="text-secondary-400 block text-xs mb-0.5">Project</span>
-                    <a href="/dashboard/projects/{{ project.id }}" class="text-primary hover:text-primary-700 font-medium text-sm">
+                    <a href="/dashboard/projects/{{ project.id }}" class="text-primary hover:text-primary-700 font-medium text-sm break-words">
                         {{ project.title }}
                     </a>
                 </div>
@@ -124,7 +124,7 @@
             {% if document.description %}
             <div class="mt-4 pt-4 border-t border-secondary-100">
                 <span class="text-xs text-secondary-400 block mb-1">Description</span>
-                <p class="text-sm text-secondary-600 whitespace-pre-line">{{ document.description }}</p>
+                <p class="text-sm text-secondary-600 whitespace-pre-line break-words">{{ document.description }}</p>
             </div>
             {% endif %}
         </div>
