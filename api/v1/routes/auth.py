@@ -69,8 +69,8 @@ def _set_auth_cookies(
     return response
 
 
-def _handle_login(request: Request, db: Session, payload, role: str):
-    """Handle login logic for any role."""
+def _handle_login(request: Request, db: Session, payload):
+    """Handle login logic — role-agnostic. Redirects based on user's actual role."""
     remember_me = str(payload.get('remember_me', '')).lower() in {'on', 'true', '1', 'yes'}
 
     user, _, _ = AuthService.authenticate(
@@ -80,11 +80,7 @@ def _handle_login(request: Request, db: Session, payload, role: str):
         create_token=False,
     )
     
-    # Verify user has the correct role
-    if user.role != role:
-        raise HTTPException(400, f"This account is not registered as a {role}. Please use the correct login page.")
-    
-    logger.info(f'User {user.email} ({role}) logged in successfully')
+    logger.info(f'User {user.email} ({user.role}) logged in successfully')
     flash(request, 'Logged in successfully', MessageCategory.SUCCESS)
 
     access_expiry_minutes = (30 * 24 * 60) if remember_me else None
@@ -101,7 +97,10 @@ def _handle_login(request: Request, db: Session, payload, role: str):
 
 def _handle_register(request: Request, db: Session, payload, bg_tasks: BackgroundTasks, role: str):
     """Handle registration logic for any role."""
-    is_active = role == UserRole.ADMIN.value
+    if role == UserRole.ADMIN.value:
+        raise HTTPException(status_code=403, detail='Admin accounts cannot be created through self-registration.')
+
+    is_active = False
     
     new_user, access_token, refresh_token = UserService.create(
         db=db,
@@ -154,25 +153,14 @@ async def auth_portal(
         action = (payload.get('action') or mode).strip().lower()
 
         try:
-            if action == 'forgot_password':
-                email = (payload.get('email') or '').strip().lower()
-                if not email:
-                    raise HTTPException(400, 'Please provide your account email address.')
-
-                user = User.fetch_one_by_field(db, throw_error=False, email=email)
-                if user:
-                    await AuthService.send_password_reset_link(db, email, bg_tasks)
-
-                flash(request, 'If this email exists, password reset instructions have been initiated.', MessageCategory.INFO)
-                return RedirectResponse(url=f'/auth?role={role}&mode=login', status_code=303)
-
             if action == 'register':
                 return _handle_register(request, db, payload, bg_tasks, role)
-            return _handle_login(request, db, payload, role)
+            return _handle_login(request, db, payload)
         except HTTPException as e:
             flash(request, e.detail, MessageCategory.ERROR)
-            redirect_mode = 'register' if action == 'register' else 'login'
-            return RedirectResponse(url=f'/auth?role={role}&mode={redirect_mode}', status_code=303)
+            if action == 'register':
+                return RedirectResponse(url=f'/auth?role={role}&mode=register', status_code=303)
+            return RedirectResponse(url='/auth?mode=login', status_code=303)
 
     return context
 
@@ -192,6 +180,13 @@ async def admin_auth():
     return RedirectResponse(url='/auth?role=admin', status_code=303)
 
 
+@auth_router.get('/forgot-password')
+@add_template_context('pages/auth/forgot_password.html')
+async def forgot_password_page(request: Request):
+    """Show the forgot password form."""
+    return {}
+
+
 @auth_router.post('/forgot-password')
 async def forgot_password(
     request: Request,
@@ -200,18 +195,81 @@ async def forgot_password(
 ):
     payload = await request.form()
     email = (payload.get('email') or '').strip().lower()
-    role = (payload.get('role') or UserRole.STUDENT.value).strip().lower()
 
     if not email:
         flash(request, 'Please provide your account email address.', MessageCategory.ERROR)
-        return RedirectResponse(url=f'/auth?role={role}&mode=login', status_code=303)
+        return RedirectResponse(url='/auth/forgot-password', status_code=303)
 
     user = User.fetch_one_by_field(db, throw_error=False, email=email)
     if user:
-        await AuthService.send_password_reset_link(db, email, bg_tasks)
+        base_url = str(request.base_url).rstrip('/')
+        await AuthService.send_password_reset_link(db, email, bg_tasks, base_url=base_url)
 
-    flash(request, 'If this email exists, password reset instructions have been initiated.', MessageCategory.INFO)
-    return RedirectResponse(url=f'/auth?role={role}&mode=login', status_code=303)
+    flash(request, 'If an account with that email exists, a password reset link has been sent.', MessageCategory.INFO)
+    return RedirectResponse(url='/auth?mode=login', status_code=303)
+
+
+@auth_router.get('/reset-password')
+@add_template_context('pages/auth/reset_password.html')
+async def reset_password_page(request: Request, db: Session = Depends(get_db)):
+    """Show the reset password form. Requires a valid token in query params."""
+    token = (request.query_params.get('token') or '').strip()
+
+    if not token:
+        flash(request, 'Invalid or missing reset link.', MessageCategory.ERROR)
+        return RedirectResponse(url='/auth/forgot-password', status_code=303)
+
+    # Validate token is still valid (without consuming it)
+    try:
+        from api.v1.services.token import TokenService
+        from api.v1.models.token import TokenType
+        TokenService.decode_and_verify_token(
+            db=db,
+            token=token,
+            expected_token_type=TokenType.PASSWORD_RESET.value,
+            credentials_exception=HTTPException(400, 'Invalid or expired reset link.'),
+        )
+    except HTTPException:
+        flash(request, 'This reset link is invalid or has expired. Please request a new one.', MessageCategory.ERROR)
+        return RedirectResponse(url='/auth/forgot-password', status_code=303)
+
+    return {'token': token}
+
+
+@auth_router.post('/reset-password')
+async def reset_password(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Handle the password reset form submission."""
+    payload = await request.form()
+    token = (payload.get('token') or '').strip()
+    password = (payload.get('password') or '').strip()
+    confirm_password = (payload.get('confirm_password') or '').strip()
+
+    if not token:
+        flash(request, 'Invalid or missing reset token.', MessageCategory.ERROR)
+        return RedirectResponse(url='/auth/forgot-password', status_code=303)
+
+    if not password or len(password) < 8:
+        flash(request, 'Password must be at least 8 characters.', MessageCategory.ERROR)
+        return RedirectResponse(url=f'/auth/reset-password?token={token}', status_code=303)
+
+    if password != confirm_password:
+        flash(request, 'Passwords do not match.', MessageCategory.ERROR)
+        return RedirectResponse(url=f'/auth/reset-password?token={token}', status_code=303)
+
+    try:
+        user_id = AuthService.verify_password_reset_token(db, token)
+        hashed_password = AuthService.hash_secret(password)
+        User.update(db, user_id, password=hashed_password)
+
+        logger.info(f'User {user_id} reset their password successfully')
+        flash(request, 'Your password has been reset successfully. Please sign in.', MessageCategory.SUCCESS)
+        return RedirectResponse(url='/auth?mode=login', status_code=303)
+    except HTTPException as e:
+        flash(request, 'This reset link is invalid or has expired. Please request a new one.', MessageCategory.ERROR)
+        return RedirectResponse(url='/auth/forgot-password', status_code=303)
 
 
 # ─── Logout ────────────────────────────────────────────────────

@@ -33,7 +33,7 @@
                 </p>
                 
                 <div class="flex flex-wrap gap-4 mb-12">
-                    <a href="/auth?role=student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg hover:shadow-xl">
+                    <a href="/auth?role=student&mode=register" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg hover:shadow-xl">
                         <i class="fa-solid fa-rocket mr-2"></i> Get Started
                     </a>
                     <a href="#features" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
@@ -246,42 +246,12 @@
 </section>
 
 
-<!-- ─── Stats Section ─────────────────────────────────────────── -->
-<section id="stats" class="py-20 bg-gradient-to-r from-primary-800 via-primary-700 to-primary-900 relative overflow-hidden">
-    <div class="absolute inset-0">
-        <div class="absolute top-0 left-1/4 w-64 h-64 bg-gold/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-primary-400/10 rounded-full blur-3xl"></div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-6 md:px-[80px] relative">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="text-center reveal">
-                <div class="text-4xl md:text-5xl font-bold text-white mb-2 counter" data-target="500">0</div>
-                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Projects</div>
-            </div>
-            <div class="text-center reveal">
-                <div class="text-4xl md:text-5xl font-bold text-gold-300 mb-2 counter" data-target="1200">0</div>
-                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Students</div>
-            </div>
-            <div class="text-center reveal">
-                <div class="text-4xl md:text-5xl font-bold text-white mb-2 counter" data-target="120">0</div>
-                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Supervisors</div>
-            </div>
-            <div class="text-center reveal">
-                <div class="text-4xl md:text-5xl font-bold text-gold-300 mb-2 counter" data-target="15">0</div>
-                <div class="text-sm text-primary-300 font-medium uppercase tracking-wider">Departments</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-
 <!-- ─── Role Cards Section ────────────────────────────────────── -->
 <section class="py-20 md:py-28 bg-white">
     <div class="max-w-7xl mx-auto px-6 md:px-[80px]">
         <div class="text-center mb-16 reveal">
             <span class="inline-block bg-primary-50 text-primary font-semibold text-sm px-4 py-1.5 rounded-full mb-4">For Everyone</span>
-            <h2 class="section-title mb-4">Choose Your Portal</h2>
+            <h2 class="section-title mb-4">Built For Every Role</h2>
             <p class="section-subtitle">Each role gets a dedicated experience designed for their specific needs.</p>
         </div>
 
@@ -298,9 +268,6 @@
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> Chat with supervisors</li>
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-primary text-xs"></i> View feedback and grades</li>
                 </ul>
-                <a href="/auth?role=student" class="btn btn-primary w-full text-center">
-                    Student Portal <i class="fa-solid fa-arrow-right ml-2"></i>
-                </a>
             </div>
 
             <!-- Supervisor Card -->
@@ -315,9 +282,6 @@
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Assign tasks and deadlines</li>
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-gold-600 text-xs"></i> Grade student progress</li>
                 </ul>
-                <a href="/auth?role=supervisor" class="btn btn-gold w-full text-center">
-                    Supervisor Portal <i class="fa-solid fa-arrow-right ml-2"></i>
-                </a>
             </div>
 
             <!-- Admin Card -->
@@ -332,9 +296,6 @@
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Department management</li>
                     <li class="flex items-center gap-2 text-sm text-secondary-600"><i class="fa-solid fa-check text-secondary-600 text-xs"></i> Generate reports</li>
                 </ul>
-                <a href="/auth?role=admin" class="btn bg-secondary-800 text-white hover:bg-secondary-900 w-full text-center">
-                    Admin Portal <i class="fa-solid fa-arrow-right ml-2"></i>
-                </a>
             </div>
         </div>
     </div>
@@ -350,11 +311,11 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
                 <p class="text-primary-200 text-lg mb-8 max-w-xl mx-auto">Join hundreds of students and supervisors already using ProjectHub to streamline their final year projects.</p>
                 <div class="flex flex-wrap gap-4 justify-center">
-                    <a href="/auth?role=student" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg">
-                        <i class="fa-solid fa-graduation-cap mr-2"></i> I'm a Student
+                    <a href="/auth?role=student&mode=register" class="btn bg-gold text-secondary-900 hover:bg-gold-400 px-8 py-3 text-base font-bold shadow-lg">
+                        <i class="fa-solid fa-user-plus mr-2"></i> Create Account
                     </a>
-                    <a href="/auth?role=supervisor" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
-                        <i class="fa-solid fa-chalkboard-teacher mr-2"></i> I'm a Supervisor
+                    <a href="/auth?mode=login" class="btn bg-white/10 text-white border border-white/30 hover:bg-white/20 px-8 py-3 text-base backdrop-blur-sm">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In
                     </a>
                 </div>
             </div>
@@ -364,45 +325,9 @@
 
 {% include "components/footer.html" %}
 
-<!-- Counter animation script -->
+<!-- Smooth scroll script -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const counters = document.querySelectorAll('.counter');
-    const speed = 50;
-
-    const animateCounter = (counter) => {
-        const target = +counter.getAttribute('data-target');
-        let current = 0;
-        const increment = target / speed;
-        
-        const updateCount = () => {
-            current += increment;
-            if (current < target) {
-                counter.innerText = Math.ceil(current).toLocaleString();
-                requestAnimationFrame(updateCount);
-            } else {
-                counter.innerText = target.toLocaleString();
-                // Add + suffix for large numbers
-                if (target >= 100) {
-                    counter.innerText = target.toLocaleString() + '+';
-                }
-            }
-        };
-        updateCount();
-    };
-
-    // Use IntersectionObserver to trigger counter animation when in view
-    const counterObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting && !entry.target.classList.contains('counted')) {
-                entry.target.classList.add('counted');
-                animateCounter(entry.target);
-            }
-        });
-    }, { threshold: 0.5 });
-
-    counters.forEach(counter => counterObserver.observe(counter));
-
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {

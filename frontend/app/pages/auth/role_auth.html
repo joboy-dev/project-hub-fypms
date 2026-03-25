@@ -19,16 +19,18 @@
             </a>
 
             <h2 class="text-3xl font-bold text-white mb-4 leading-tight">
-                {% if role == 'student' %}
-                Student Workspace Access
-                {% elif role == 'supervisor' %}
-                Supervisor Workspace Access
+                {% if active_mode == 'register' %}
+                Create Your Account
                 {% else %}
-                Administrator Workspace Access
+                Welcome Back
                 {% endif %}
             </h2>
             <p class="text-primary-200 text-base leading-relaxed mb-8">
-                Authenticate once and continue with role-based access control. Your permissions and dashboard tools are automatically scoped to your account role.
+                {% if active_mode == 'register' %}
+                Sign up once and get auto-routed to your personalised dashboard based on your assigned role.
+                {% else %}
+                Sign in with your email and password. You'll be automatically redirected to your role-specific dashboard.
+                {% endif %}
             </p>
         </div>
 
@@ -66,21 +68,22 @@
                 </a>
             </div>
 
-            <div class="flex items-center justify-center mb-6">
+            
+            {% if active_mode == 'register' %}
+            <!-- <div class="flex items-center justify-center mb-6">
                 <div class="inline-flex items-center gap-2 bg-primary-50 border border-primary-200 rounded-full px-4 py-2">
                     <i class="fa-solid {{ role_icon }} text-primary text-sm"></i>
                     <span class="text-primary font-semibold text-sm">{{ role_label }} Portal</span>
                 </div>
-            </div>
+            </div> -->
 
             <div class="flex flex-wrap justify-center gap-2 mb-6">
                 <a href="/auth?role=student&mode={{ active_mode }}" class="px-3 py-1.5 rounded-full text-xs font-semibold border {{ 'bg-primary text-white border-primary' if role == 'student' else 'bg-white text-secondary-600 border-secondary-200 hover:border-primary-300' }}">Student</a>
                 <a href="/auth?role=supervisor&mode={{ active_mode }}" class="px-3 py-1.5 rounded-full text-xs font-semibold border {{ 'bg-primary text-white border-primary' if role == 'supervisor' else 'bg-white text-secondary-600 border-secondary-200 hover:border-primary-300' }}">Supervisor</a>
-                <a href="/auth?role=admin&mode={{ active_mode }}" class="px-3 py-1.5 rounded-full text-xs font-semibold border {{ 'bg-primary text-white border-primary' if role == 'admin' else 'bg-white text-secondary-600 border-secondary-200 hover:border-primary-300' }}">Admin</a>
             </div>
-
-            {% if active_mode == 'register' %}
             <div id="form-register" class="auth-form">
+                <h2 class="text-2xl font-bold text-secondary-900 text-center mb-1">Create Account</h2>
+                <p class="text-secondary text-sm text-center mb-6">Fill in your details to get started</p>
                 <form method="post" action="/auth?role={{ role }}&mode=register" class="space-y-4">
                     <input type="hidden" name="action" value="register">
 
@@ -131,13 +134,15 @@
 
                     <p class="text-center text-secondary text-sm">
                         Already have an account?
-                        <a href="/auth?role={{ role }}&mode=login" class="text-primary font-semibold hover:text-primary-700">Sign in</a>
+                        <a href="/auth?mode=login" class="text-primary font-semibold hover:text-primary-700">Sign in</a>
                     </p>
                 </form>
             </div>
             {% else %}
             <div id="form-login" class="auth-form">
-                <form method="post" action="/auth?role={{ role }}&mode=login" class="space-y-5">
+                <h2 class="text-2xl font-bold text-secondary-900 text-center mb-1">Sign In</h2>
+                <p class="text-secondary text-sm text-center mb-6">Enter your credentials to access your dashboard</p>
+                <form method="post" action="/auth?mode=login" class="space-y-5">
                     <input type="hidden" name="action" value="login">
 
                     <div class="space-y-1.5">
@@ -164,19 +169,16 @@
                             <input type="checkbox" name="remember_me" class="rounded border-secondary-300 text-primary focus:ring-primary">
                             <span class="text-secondary-600">Remember me</span>
                         </label>
+                        <a href="/auth/forgot-password" class="text-sm font-medium text-primary hover:text-primary-700">Forgot password?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-full py-3 text-sm">
                         Sign In <i class="fa-solid fa-arrow-right ml-2"></i>
                     </button>
 
-                    <button type="submit" name="action" value="forgot_password" class="w-full text-sm font-medium text-primary hover:text-primary-700 cursor-pointer">
-                        Forgot password?
-                    </button>
-
                     <p class="text-center text-secondary text-sm">
                         Don't have an account?
-                        <a href="/auth?role={{ role }}&mode=register" class="text-primary font-semibold hover:text-primary-700">Create one</a>
+                        <a href="/auth?role=student&mode=register" class="text-primary font-semibold hover:text-primary-700">Create one</a>
                     </p>
                 </form>
             </div>
@@ -192,6 +194,11 @@
 </div>
 
 <script>
+// Prevent back-button from cycling through stacked redirect entries
+if (window.history.replaceState) {
+    window.history.replaceState(null, document.title, window.location.href);
+}
+
 document.querySelectorAll('.password-toggle').forEach((toggle) => {
     toggle.addEventListener('click', () => {
         const input = document.getElementById(toggle.dataset.target);

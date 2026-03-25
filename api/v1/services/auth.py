@@ -202,7 +202,7 @@ class AuthService:
             status_code=401, detail="Invalid token"
         )
         
-        user_id, _ = cls.verify_token(
+        user_id = cls.verify_token(
             db=db,
             token=token,
             expected_token_type=TokenType.MAGIC.value,
@@ -220,8 +220,8 @@ class AuthService:
     
     
     @classmethod
-    async def send_password_reset_link(cls, db: Session, email: str, bg_tasks: BackgroundTasks):
-        """Function to send password reset token to user"""
+    async def send_password_reset_link(cls, db: Session, email: str, bg_tasks: BackgroundTasks, base_url: str = ''):
+        """Function to send password reset link to user"""
         
         user = User.fetch_one_by_field(db=db, email=email)
         
@@ -237,22 +237,17 @@ class AuthService:
             user_id=user.id,
         )
 
-        # Use the existing notification email template until a dedicated
-        # password-reset page/template is introduced.
+        reset_url = f"{base_url.rstrip('/')}/auth/reset-password?token={password_reset_token}"
+
         bg_tasks.add_task(
             send_email,
             recipients=[user.email],
-            template_name='notification.html',
-            subject='ProjectHub - Password Reset Request',
+            template_name='password_reset.html',
+            subject='ProjectHub - Reset Your Password',
             template_data={
                 'user_name': user.first_name,
-                'notification_title': 'Password reset request received',
-                'notification_content': (
-                    f'Use this reset token to complete password reset within {expiry_minutes} minutes: '
-                    f'{password_reset_token}'
-                ),
-                'notification_type': 'system',
-                'action_url': None,
+                'reset_url': reset_url,
+                'expiry_minutes': expiry_minutes,
             }
         )
         
@@ -266,7 +261,7 @@ class AuthService:
             status_code=401, detail="Invalid token"
         )
         
-        user_id, _ = cls.verify_token(
+        user_id = cls.verify_token(
             db=db,
             token=token,
             expected_token_type=TokenType.PASSWORD_RESET.value,

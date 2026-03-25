@@ -46,9 +46,16 @@
 <aside id="sidebar" class="fixed top-0 left-0 z-50 h-screen w-64 bg-white border-r border-secondary-200 flex flex-col shadow-sm transition-all duration-300 -translate-x-full lg:translate-x-0 lg:static lg:z-auto">
     
     <!-- Header -->
-    <div class="h-16 px-5 flex justify-between items-center border-b border-secondary-200 flex-shrink-0">
-        {% include "components/logo.html" %}
-        <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center text-secondary-400 hover:text-secondary-700 hover:bg-secondary-100 cursor-pointer lg:hidden">
+    <div class="h-16 px-3 flex items-center border-b border-secondary-200 flex-shrink-0">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+            {% include "components/logo.html" %}
+        </div>
+        <!-- Desktop collapse toggle -->
+        <button id="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" class="hidden lg:flex w-8 h-8 rounded-md items-center justify-center text-secondary-400 hover:text-secondary-700 hover:bg-secondary-100 cursor-pointer transition-colors flex-shrink-0" title="Collapse sidebar">
+            <i class="fa-solid fa-chevron-left text-sm transition-transform duration-300" id="collapse-chevron"></i>
+        </button>
+        <!-- Mobile close button -->
+        <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center text-secondary-400 hover:text-secondary-700 hover:bg-secondary-100 cursor-pointer lg:hidden flex-shrink-0">
             <i class="fa-solid fa-xmark text-lg"></i>
         </button>
     </div>
@@ -64,11 +71,12 @@
                           bg-primary-50 text-primary border-l-3 border-primary
                       {% else %}
                           text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900
-                      {% endif %}">
-                <i class="fa-solid {{ item.icon }} w-5 text-center {% if is_active %}text-primary{% else %}text-secondary-400{% endif %}"></i>
+                      {% endif %}"
+               title="{{ item.label }}">
+                <i class="fa-solid {{ item.icon }} w-5 text-center flex-shrink-0 {% if is_active %}text-primary{% else %}text-secondary-400{% endif %}"></i>
                 <span class="sidebar-label">{{ item.label }}</span>
                 {% if is_active %}
-                <div class="ml-auto w-1.5 h-1.5 rounded-full bg-primary"></div>
+                <div class="ml-auto w-1.5 h-1.5 rounded-full bg-primary sidebar-label"></div>
                 {% endif %}
             </a>
             {% endfor %}
@@ -89,14 +97,72 @@
             {% endif %}
             
             <form action="{{ url_for('logout') }}" method="post">
-                <button type="submit" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-accent-error hover:bg-red-50 w-full cursor-pointer transition-colors">
-                    <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+                <button type="submit" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-accent-error hover:bg-red-50 w-full cursor-pointer transition-colors" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket w-5 text-center flex-shrink-0"></i>
                     <span class="sidebar-label">Logout</span>
                 </button>
             </form>
         </div>
     </div>
 </aside>
+
+<script>
+// Mobile sidebar toggle
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const isOpen = !sidebar.classList.contains('-translate-x-full');
+    
+    if (isOpen) {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    } else {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    }
+}
+
+// Desktop sidebar collapse toggle
+function toggleSidebarCollapse() {
+    const sidebar = document.getElementById('sidebar');
+    const chevron = document.getElementById('collapse-chevron');
+    const collapseBtn = document.getElementById('sidebar-collapse-btn');
+    const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+
+    if (isCollapsed) {
+        sidebar.classList.remove('sidebar-collapsed');
+        sidebar.style.width = '';
+        chevron.style.transform = '';
+    } else {
+        sidebar.classList.add('sidebar-collapsed');
+        sidebar.style.width = '88px';
+        chevron.style.transform = 'rotate(180deg)';
+    }
+
+    // Toggle visibility of text elements but never hide the collapse button
+    sidebar.querySelectorAll('.sidebar-label, .logo-text').forEach(el => {
+        if (isCollapsed) {
+            el.style.opacity = '';
+            el.style.width = '';
+            el.style.overflow = '';
+        } else {
+            el.style.opacity = '0';
+            el.style.width = '0';
+            el.style.overflow = 'hidden';
+        }
+    });
+
+    // Save state
+    localStorage.setItem('sidebar-collapsed', isCollapsed ? '' : '1');
+}
+
+// Restore collapsed state on load
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth >= 1024 && localStorage.getItem('sidebar-collapsed') === '1') {
+        toggleSidebarCollapse();
+    }
+});
+</script>
 
 <script>
 function toggleSidebar() {
